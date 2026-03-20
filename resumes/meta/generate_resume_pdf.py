@@ -323,6 +323,11 @@ def build_field_service(output_path):
         "Jul 2017 \u2013 Oct 2019",
         "El Garage Project Hub \u2014 Mexicali, MX",
     ))
+    story.append(bullet(
+        "Led the inaugural NASA Space Apps Challenge in Mexicali (175+ participants) and taught "
+        "hands-on robotics workshops to 50+ students",
+        s,
+    ))
 
     # Education
     story.extend(section_header("EDUCATION"))
@@ -445,6 +450,11 @@ def build_research_engineer(output_path):
         "AR/VR Project Engineer",
         "Jul 2017 \u2013 Oct 2019",
         "El Garage Project Hub \u2014 Mexicali, MX",
+    ))
+    story.append(bullet(
+        "Led the NASA Space Apps Challenge (175+ participants); built AR/VR prototypes in Unity (C#) "
+        "and taught robotics workshops to 50+ students",
+        s,
     ))
 
     # Education
@@ -571,6 +581,11 @@ def build_mech_design(output_path):
         "AR/VR Project Engineer",
         "Jul 2017 \u2013 Oct 2019",
         "El Garage Project Hub \u2014 Mexicali, MX",
+    ))
+    story.append(bullet(
+        "Designed a 3D-printed 6-DOF robotic arm and led the NASA Space Apps Challenge in Mexicali "
+        "(175+ participants)",
+        s,
     ))
 
     # Education

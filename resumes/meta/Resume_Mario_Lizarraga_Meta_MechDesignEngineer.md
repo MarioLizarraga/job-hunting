@@ -31,6 +31,8 @@ Honeywell Aerospace — Mexicali, Mexico
 AR/VR PROJECT ENGINEER | Jul 2017 – Oct 2019
 El Garage Project Hub — Mexicali, Mexico
 
+- Designed a 3D-printed 6-DOF robotic arm and led the NASA Space Apps Challenge in Mexicali (175+ participants)
+
 EDUCATION
 
 MSc Space Systems Engineering (Merit) — University of Southampton, UK | 2020 – 2021

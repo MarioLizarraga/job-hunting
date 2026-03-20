@@ -31,6 +31,8 @@ Honeywell Aerospace — Mexicali, Mexico
 AR/VR PROJECT ENGINEER | Jul 2017 – Oct 2019
 El Garage Project Hub — Mexicali, Mexico
 
+- Led the NASA Space Apps Challenge (175+ participants); built AR/VR prototypes in Unity (C#) and taught robotics workshops to 50+ students
+
 EDUCATION
 
 MSc Space Systems Engineering (Merit) — University of Southampton, UK | 2020 – 2021
