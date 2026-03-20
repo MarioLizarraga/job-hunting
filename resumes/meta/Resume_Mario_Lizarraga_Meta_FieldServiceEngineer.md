@@ -8,13 +8,13 @@ Automation engineer with 7+ years troubleshooting electro-mechanical systems in 
 EXPERIENCE
 
 AUTOMATION ENGINEER II | Feb 2023 – Present
-Safran Electronics & Defense, Avionics USA — Redmond, WA
+Safran Electronics & Defense — Redmond, WA
 
-- Built and maintained a UFactory 850 robotic test system — troubleshot failures across mechanical, electrical, firmware, and software subsystems, cutting test time from 30 to 10 min/panel and freeing 25+ hrs/week
-- Conducted failure analysis on force sensor data, identified root causes of recurring failures, implemented corrective actions — tracked patterns via custom monitoring platform to prioritize reliability improvements
-- Supervised 5 interns on AI defect detection and robotics — delivered a 92% accuracy ML solution and hardware prototype for vision-based inspection
-- Created 7+ service documents (setup, calibration, troubleshooting, failure modes), enabling technicians to maintain systems without engineering support
-- Designed test fixtures and end-effectors via iterative prototyping (SolidWorks, 3D printing), applying DFM/DFA with spares strategy for wear parts
+- Built and maintained a UFactory 850 robotic test system — troubleshot failures across mechanical, electrical, firmware, and software subsystems, cutting test time by 67% and freeing 25+ hrs/week
+- Conducted failure analysis on force sensor data, identified root causes of recurring failures, and implemented corrective actions via custom monitoring platform
+- Supervised 5 interns on AI defect detection and robotics — delivered a 92% accuracy ML model and hardware prototype for vision-based inspection
+- Created 7+ service documents (setup, calibration, troubleshooting, failure modes), enabling technicians to maintain systems independently
+- Designed test fixtures and end-effectors via iterative prototyping (SolidWorks, 3D printing), applying DFM/DFA with spares strategy
 
 DESIGN ENGINEER | Nov 2021 – Dec 2022
 Jenton International — Whitchurch, UK
@@ -31,8 +31,6 @@ Honeywell Aerospace — Mexicali, Mexico
 AR/VR PROJECT ENGINEER | Jul 2017 – Oct 2019
 El Garage Project Hub — Mexicali, Mexico
 
-- Led the NASA Space Apps Challenge in Mexicali (175+ participants); taught robotics workshops to 50+ students
-
 EDUCATION
 
 MSc Space Systems Engineering (Merit) — University of Southampton, UK | 2020 – 2021
@@ -40,14 +38,9 @@ BSc Mechatronics Engineering (Magna Cum Laude, 96.36) — CETYS Universidad, Mex
 
 SKILLS
 
-Electro-Mechanical: robot arm troubleshooting, sensors (force, temp, vibration), actuators, relay circuits, serial/I2C
-Robotics: UFactory xArm, fixture design, gantry systems, PLC, fleet maintenance, MTBF/MTTR, preventative maintenance
-Embedded: STM32 (C), Arduino, Raspberry Pi, Linux | Software: Python, SQL, JavaScript, C#, Git
-CAD: SolidWorks, CATIA V5, Autodesk Inventor, Siemens NX
+Robotics & Electro-Mechanical: robot arm troubleshooting, gantry systems, sensors (force, temp, vibration), actuators, PLC, relay circuits, serial/I2C, fleet maintenance, MTBF/MTTR, preventative maintenance
+Technical: Python, C (STM32), SQL, Git, SolidWorks, CATIA V5, Autodesk Inventor, Arduino, Raspberry Pi, Linux
 Methods: failure analysis, root cause analysis, DFM/DFA, GD&T, machine learning, computer vision
 
-CERTIFICATIONS
-
-Six Sigma Green Belt DFSS — Honeywell | CATIA V5 Mech Design Expert — Dassault | GD&T — Applied Geometrics
-
+CERTIFICATIONS: Six Sigma Green Belt DFSS — Honeywell | CATIA V5 Expert — Dassault | GD&T — Applied Geometrics
 LANGUAGES: English (fluent) | Spanish (native)
