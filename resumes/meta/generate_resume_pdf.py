@@ -31,11 +31,11 @@ def create_styles():
     styles['name'] = ParagraphStyle(
         'Name',
         fontName='Helvetica-Bold',
-        fontSize=18,
-        leading=22,
+        fontSize=16,
+        leading=19,
         alignment=TA_CENTER,
         textColor=BLACK,
-        spaceAfter=2,
+        spaceAfter=1,
     )
 
     styles['contact'] = ParagraphStyle(
@@ -45,26 +45,26 @@ def create_styles():
         leading=11,
         alignment=TA_CENTER,
         textColor=GRAY,
-        spaceAfter=4,
+        spaceAfter=3,
     )
 
     styles['section_header'] = ParagraphStyle(
         'SectionHeader',
         fontName='Helvetica-Bold',
-        fontSize=11,
-        leading=13,
+        fontSize=10.5,
+        leading=12,
         textColor=DARK_BLUE,
-        spaceBefore=6,
-        spaceAfter=2,
+        spaceBefore=5,
+        spaceAfter=1.5,
     )
 
     styles['summary'] = ParagraphStyle(
         'Summary',
         fontName='Helvetica',
-        fontSize=9.5,
-        leading=12,
+        fontSize=10,
+        leading=12.5,
         textColor=BLACK,
-        spaceAfter=2,
+        spaceAfter=1,
     )
 
     styles['job_title'] = ParagraphStyle(
@@ -73,7 +73,7 @@ def create_styles():
         fontSize=10,
         leading=12,
         textColor=BLACK,
-        spaceBefore=4,
+        spaceBefore=3,
         spaceAfter=0,
     )
 
@@ -83,45 +83,45 @@ def create_styles():
         fontSize=9,
         leading=11,
         textColor=GRAY,
-        spaceAfter=2,
+        spaceAfter=1.5,
     )
 
     styles['bullet'] = ParagraphStyle(
         'Bullet',
         fontName='Helvetica',
-        fontSize=9.5,
-        leading=11.5,
+        fontSize=10,
+        leading=12,
         textColor=BLACK,
         leftIndent=12,
         firstLineIndent=-12,
-        spaceAfter=1.5,
+        spaceAfter=1,
     )
 
     styles['education'] = ParagraphStyle(
         'Education',
         fontName='Helvetica',
-        fontSize=9.5,
-        leading=11.5,
+        fontSize=10,
+        leading=12,
         textColor=BLACK,
-        spaceAfter=1.5,
+        spaceAfter=1,
     )
 
     styles['skills'] = ParagraphStyle(
         'Skills',
         fontName='Helvetica',
-        fontSize=9,
-        leading=11,
+        fontSize=9.5,
+        leading=11.5,
         textColor=BLACK,
-        spaceAfter=1.5,
+        spaceAfter=1,
     )
 
     styles['certs'] = ParagraphStyle(
         'Certs',
         fontName='Helvetica',
-        fontSize=9,
-        leading=11,
+        fontSize=9.5,
+        leading=11.5,
         textColor=BLACK,
-        spaceAfter=1,
+        spaceAfter=0.5,
     )
 
     return styles
