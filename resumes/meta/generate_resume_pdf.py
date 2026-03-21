@@ -400,7 +400,7 @@ def build_research_engineer(output_path):
         "Safran Electronics &amp; Defense \u2014 Redmond, WA",
     ))
     for b in [
-        "Designed and built a robotic test platform \u2014 UFactory 850 arm, FUTEK USB520 load cell, "
+        "Designed and built a robotic test platform \u2014 UFactory 850 arm, FUTEK load cell, "
         "3D-printed fixtures, STM32 continuity tester \u2014 cutting test time by 67% across 75 panels/week",
 
         "Wrote STM32 firmware in C for a custom continuity board \u2014 serial comms, signal "
@@ -534,7 +534,7 @@ def build_mech_design(output_path):
         "(3D printing), sub-millimeter alignment under cyclic loads, enabling 67% reduction in "
         "per-panel test time",
 
-        "Instrumented test platform with FUTEK USB520 load cell for force-vs-displacement capture; "
+        "Instrumented test platform with FUTEK load cell for force-vs-displacement capture; "
         "built Python pipeline (SciPy) to extract peak force, travel, and inflection points",
 
         "Installed accelerometers on fixtures, conducted vibration measurement to establish dynamic "

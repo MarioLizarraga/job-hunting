@@ -11,7 +11,7 @@ AUTOMATION ENGINEER II | Feb 2023 – Present
 Safran Electronics & Defense — Redmond, WA
 
 - Designed test fixtures and end-effectors in SolidWorks — 4+ prototype revisions (3D printing), sub-millimeter alignment under cyclic loads, enabling 67% reduction in per-panel test time
-- Instrumented test platform with FUTEK USB520 load cell for force-vs-displacement capture; built Python pipeline (SciPy) to extract peak force, travel, and inflection points
+- Instrumented test platform with FUTEK load cell for force-vs-displacement capture; built Python pipeline (SciPy) to extract peak force, travel, and inflection points
 - Installed accelerometers on fixtures, conducted vibration measurement to establish dynamic load profiles and validate design improvements
 - Designed a multi-axis gantry (X, Y, Z, rotation) for automated panel inspection — mechanical layout, camera mounting, motion control
 - Supervised 5 interns on AI defect detection and robotics — delivered a 92% accuracy ML model and hardware prototype

@@ -10,7 +10,7 @@ EXPERIENCE
 AUTOMATION ENGINEER II | Feb 2023 – Present
 Safran Electronics & Defense — Redmond, WA
 
-- Designed and built a robotic test platform — UFactory 850 arm, FUTEK USB520 load cell, 3D-printed fixtures, STM32 continuity tester — cutting test time by 67% across 75 panels/week
+- Designed and built a robotic test platform — UFactory 850 arm, FUTEK load cell, 3D-printed fixtures, STM32 continuity tester — cutting test time by 67% across 75 panels/week
 - Wrote STM32 firmware in C for a custom continuity board — serial comms, signal acquisition, debounce logic for real-time validation during robot press cycles
 - Modeled and iterated test fixtures and end-effectors in SolidWorks — sub-millimeter alignment through 4+ revisions (FDM/SLA)
 - Developed a multi-axis gantry (X, Y, Z, rotation) for automated panel inspection — mechanical layout, motion control, DSLR integration
