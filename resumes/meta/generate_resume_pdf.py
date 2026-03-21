@@ -628,6 +628,138 @@ def build_mech_design(output_path):
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  V4: Amazon — Hardware Development Engineer, WWGS Robotics
+# ═══════════════════════════════════════════════════════════════════════
+
+def build_amazon_hde(output_path):
+    doc = make_doc(output_path)
+    s = create_styles()
+    story = []
+
+    story.extend(header_block(s))
+
+    # Summary — mirror Amazon's JD language: mechanical engineering, prototyping,
+    # make-vs-buy, vendor evaluation, robotics/automation
+    story.extend(section_header("PROFESSIONAL SUMMARY"))
+    story.append(Paragraph(
+        "Mechanical engineer with 7+ years designing, prototyping, and validating hardware for "
+        "robotics and automation in aerospace. Built a robotic test platform from concept to "
+        "production \u2014 CAD models, drawings, test plans, trade studies. Cut cycle time by 67% "
+        "and freed 1,300+ hrs/year. Make-vs-buy trade-offs and vendor evaluation for custom tooling.",
+        s['summary'],
+    ))
+
+    # Experience
+    story.extend(section_header("EXPERIENCE"))
+
+    # Safran
+    story.extend(job_entry(
+        "Automation Engineer II",
+        "Feb 2023 \u2013 Present",
+        "Safran Electronics &amp; Defense \u2014 Redmond, WA",
+    ))
+    for b in [
+        "Designed and developed a robotic test platform \u2014 UFactory 850 arm, FUTEK load cell, "
+        "custom 3D-printed fixtures \u2014 delivering CAD models, drawings, and test plans that cut "
+        "test cycle time by 67% across 75 panels/week",
+
+        "Researched commercially available solutions and made make-vs-buy trade-offs for sensors, "
+        "actuators, and test fixtures; developed bespoke tooling when commercial options fell short",
+
+        "Built and tested prototypes using rapid prototyping (FDM/SLA 3D printing) and low-volume "
+        "manufacturing, iterating through 4+ design revisions to achieve sub-millimeter alignment",
+
+        "Evaluated vendor designs for sensors and actuators, validated performance claims through "
+        "independent testing; partnered with quality, manufacturing, and operations on corrective actions",
+
+        "Supervised 5 interns on AI defect detection and robotics \u2014 delivered a 92% accuracy "
+        "ML model and hardware prototype for vision-based inspection",
+    ]:
+        story.append(bullet(b, s))
+
+    # Jenton
+    story.extend(job_entry(
+        "Automation &amp; Design Engineer",
+        "Nov 2021 \u2013 Dec 2022",
+        "Jenton International \u2014 Whitchurch, UK",
+    ))
+    for b in [
+        "Designed complex mechanical products and custom automation equipment in Autodesk Inventor "
+        "\u2014 mechanical layouts, pneumatics, electromechanical assemblies",
+        "Built and commissioned equipment, troubleshooting design issues and collaborating with "
+        "suppliers and manufacturers to ensure design feasibility",
+    ]:
+        story.append(bullet(b, s))
+
+    # Honeywell
+    story.extend(job_entry(
+        "Design Engineer",
+        "Jun 2019 \u2013 Sep 2020",
+        "Honeywell Aerospace \u2014 Mexicali, MX",
+    ))
+    for b in [
+        "Designed mechanical components in CATIA V5 for jet engine APU systems, applying GD&amp;T "
+        "per ASME Y14.5 and tolerance stackup analysis for volume production",
+        "Led DFM/DFA reviews with casting and CNC suppliers; completed Six Sigma Green Belt DFSS "
+        "(DOE, statistical tolerance analysis)",
+    ]:
+        story.append(bullet(b, s))
+
+    # El Garage
+    story.extend(job_entry(
+        "AR/VR Project Engineer",
+        "Jul 2017 \u2013 Oct 2019",
+        "El Garage Project Hub \u2014 Mexicali, MX",
+    ))
+    story.append(bullet(
+        "Designed a 3D-printed 6-DOF robotic arm; led the NASA Space Apps Challenge in Mexicali "
+        "(175+ participants)",
+        s,
+    ))
+
+    # Education
+    story.extend(section_header("EDUCATION"))
+    story.append(Paragraph(
+        "<b>MSc Space Systems Engineering</b> (Merit) \u2014 University of Southampton, UK  |  2020 \u2013 2021",
+        s['edu'],
+    ))
+    story.append(Paragraph(
+        "<b>BSc Mechatronics Engineering</b> (Magna Cum Laude, 96.36) \u2014 CETYS Universidad, Mexico  |  2013 \u2013 2017",
+        s['edu'],
+    ))
+
+    # Skills — mirror JD: CAD, prototyping, vendor evaluation, trade studies
+    story.extend(section_header("SKILLS"))
+    for sk in [
+        "<b>CAD &amp; Design:</b> SolidWorks, CATIA V5 (certified expert), Autodesk Inventor, Siemens NX, "
+        "detailed drawings, GD&amp;T (ASME Y14.5), tolerance stackup, trade studies",
+
+        "<b>Prototyping &amp; Manufacturing:</b> 3D printing (FDM/SLA), CNC, sheet metal, casting, "
+        "rapid prototyping, low-volume manufacturing, DFM/DFA, vendor evaluation",
+
+        "<b>Robotics &amp; Test:</b> robotic arms (UFactory xArm), force sensors (FUTEK), gantry systems, "
+        "test plan development, validation, fixture design, vibration measurement",
+
+        "<b>Technical:</b> Python (SciPy, NumPy, OpenCV), MATLAB, C (STM32), SQL, Git, Arduino, "
+        "Raspberry Pi, machine learning, computer vision",
+    ]:
+        story.append(Paragraph(sk, s['skills']))
+
+    # Certifications & Languages
+    story.extend(section_header("CERTIFICATIONS &amp; LANGUAGES"))
+    story.append(Paragraph(
+        "CATIA V5 Expert \u2014 Dassault  |  Six Sigma Green Belt DFSS \u2014 Honeywell  |  "
+        "GD&amp;T \u2014 Applied Geometrics",
+        s['certs'],
+    ))
+    story.append(Paragraph("English (fluent)  |  Spanish (native)", s['certs']))
+
+    doc.build(story)
+    verify_one_page(output_path)
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  Main
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -643,4 +775,7 @@ if __name__ == "__main__":
     v3 = build_mech_design(os.path.join(out_dir, "ML_Meta_MechDesignEngineer.pdf"))
     print(f"[OK] V3 Mech Design: {v3}")
 
-    print("\nAll 3 resumes generated and verified as single-page PDFs.")
+    v4 = build_amazon_hde(os.path.join(out_dir, "ML_Amazon_HardwareDevEngineer.pdf"))
+    print(f"[OK] V4 Amazon HDE: {v4}")
+
+    print("\nAll resumes generated and verified as single-page PDFs.")
