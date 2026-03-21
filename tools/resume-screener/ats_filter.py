@@ -219,7 +219,32 @@ def check_keyword_match(resume_text: str, jd_data: Dict) -> Tuple[float, str, Di
                     'preferred', 'years', 'minimum', 'within', 'across', 'role',
                     'position', 'candidate', 'ideal', 'must', 'should', 'will',
                     'based', 'level', 'high', 'specific', 'relevant', 'skills',
-                    'technical', 'professional', 'development', 'management'}
+                    'technical', 'professional', 'development', 'management',
+                    # JD filler words that are NOT real requirements
+                    'actionable', 'ambiguous', 'clear', 'basic', 'consumer',
+                    'demonstrated', 'drivers', 'environments', 'evolving',
+                    'escalations', 'architecture', 'assembly', 'connectors',
+                    'effectively', 'efficiently', 'ensure', 'ensuring',
+                    'identify', 'identifying', 'improve', 'improving',
+                    'implement', 'implementing', 'maintain', 'maintaining',
+                    'manage', 'managing', 'monitor', 'monitoring',
+                    'perform', 'performing', 'provide', 'providing',
+                    'support', 'supporting', 'track', 'tracking',
+                    'analyze', 'analyzing', 'collaborate', 'collaborating',
+                    'communicate', 'communicating', 'coordinate', 'coordinating',
+                    'deliver', 'delivering', 'drive', 'driving',
+                    'evaluate', 'evaluating', 'execute', 'executing',
+                    'lead', 'leading', 'operate', 'operating',
+                    'participate', 'participating', 'plan', 'planning',
+                    'report', 'reporting', 'review', 'reviewing',
+                    'contribute', 'contributing', 'define', 'defining',
+                    'build', 'building', 'create', 'creating',
+                    'follow', 'following', 'focus', 'focusing',
+                    'include', 'including', 'involve', 'involving',
+                    'need', 'require', 'responsible', 'cross-functionally',
+                    'key', 'multiple', 'various', 'overall', 'critical',
+                    'proactive', 'proven', 'robust', 'significant',
+                    'successful', 'comprehensive', 'extensive', 'hands-on'}
     req_missing = {k for k in req_missing if k not in common_noise and len(k) > 2}
     pref_missing = {k for k in pref_missing if k not in common_noise and len(k) > 2}
 

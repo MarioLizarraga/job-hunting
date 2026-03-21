@@ -271,21 +271,21 @@ def build_field_service(output_path):
         "Safran Electronics &amp; Defense \u2014 Redmond, WA",
     ))
     for b in [
-        "Built and maintained a UFactory 850 robotic test system \u2014 troubleshot failures across "
-        "mechanical, electrical, firmware, and software subsystems, cutting test time by 67% and "
-        "freeing 25+ hrs/week",
+        "Built and maintained a UFactory 850 robotic test system \u2014 troubleshot field failures "
+        "across mechanical, electrical, firmware, and software subsystems and interfaces, cutting "
+        "test time by 67% and freeing 25+ hrs/week",
 
         "Conducted failure analysis on force sensor data, identified root causes of recurring "
-        "failures, and implemented corrective actions via custom monitoring platform",
+        "failures, and drove cross-functional corrective actions with manufacturing and operations",
 
         "Supervised 5 interns on AI defect detection and robotics \u2014 delivered a 92% accuracy "
         "ML model and hardware prototype for vision-based inspection",
 
         "Created 7+ service documents (setup, calibration, troubleshooting, failure modes), "
-        "enabling technicians to maintain systems independently",
+        "enabling field technicians to maintain deployed systems independently",
 
         "Designed test fixtures and end-effectors via iterative prototyping (SolidWorks, 3D "
-        "printing), applying DFM/DFA with spares strategy",
+        "printing), applying DFM/DFA principles with spares strategy",
     ]:
         story.append(bullet(b, s))
 
@@ -297,9 +297,9 @@ def build_field_service(output_path):
     ))
     for b in [
         "Designed and commissioned custom automation equipment \u2014 mechanical layout, pneumatics, "
-        "sensor integration",
+        "subsystem integration for manufacturing process lines",
         "Troubleshot electro-mechanical issues during build and commissioning, resolving fitment, "
-        "wiring, and alignment problems",
+        "wiring, and alignment problems in collaboration with operations teams",
     ]:
         story.append(bullet(b, s))
 

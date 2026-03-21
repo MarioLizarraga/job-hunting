@@ -206,7 +206,7 @@ def analyze_structural_uniformity(text: str) -> Tuple[float, str]:
     Humans vary their structure.
     """
     # Extract bullet lines
-    bullets = re.findall(r'[•\-\*]\s*(.+?)(?:\n|$)', text)
+    bullets = re.findall(r'(?:[•\-\*\u2022\u2023\u25CF\u25CB\u25E6\u2043\u2219]|\(cid:\d+\))\s*(.+?)(?:\n|$)', text)
     if len(bullets) < 4:
         return 70.0, "Too few bullets for structural analysis"
 

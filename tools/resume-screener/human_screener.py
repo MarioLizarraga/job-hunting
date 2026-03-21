@@ -67,8 +67,18 @@ def check_visual_density(resume_text: str) -> Tuple[float, str]:
     word_count = len(resume_text.split())
     line_count = len(resume_text.strip().split('\n'))
 
-    # Count bullets
-    bullet_count = len(re.findall(r'[•\-\*]\s', resume_text))
+    # Count bullets — handle various bullet chars from PDF extraction
+    bullet_count = len(re.findall(r'(?:[•\-\*\u2022\u2023\u25CF\u25CB\u25E6\u2043\u2219]|\(cid:\d+\)|\d+\.)\s', resume_text))
+    # Fallback: count lines starting with action verbs (PDF may strip bullet chars)
+    if bullet_count == 0:
+        verb_starts = sum(1 for line in resume_text.split('\n')
+                         if line.strip() and line.strip().split()[0].lower().rstrip('ed,s') in
+                         {'built', 'design', 'develop', 'creat', 'led', 'manag', 'direct',
+                          'reduc', 'cut', 'increas', 'improv', 'launch', 'deploy',
+                          'automat', 'troubleshot', 'debug', 'wrote', 'program',
+                          'analyz', 'measur', 'test', 'model', 'prototype', 'supervis',
+                          'conduct', 'support', 'install', 'instrument', 'produc'})
+        bullet_count = verb_starts
 
     if 350 <= word_count <= 500:
         score = 90
@@ -103,7 +113,20 @@ def check_bullet_quality(resume_text: str) -> Tuple[float, str, Dict]:
     Great bullets: Start with strong verb, include numbers, specific.
     Weak bullets: Passive, vague, no results.
     """
-    bullets = re.findall(r'[•\-\*]\s*(.+?)(?:\n|$)', resume_text)
+    # Try multiple bullet detection strategies
+    bullets = re.findall(r'(?:[•\-\*\u2022\u2023\u25CF\u25CB\u25E6\u2043\u2219]|\(cid:\d+\))\s*(.+?)(?:\n|$)', resume_text)
+
+    # Fallback: detect lines that start with action verbs (PDF may strip bullet chars)
+    if len(bullets) < 3:
+        all_verbs = STRONG_VERBS | WEAK_VERBS
+        for line in resume_text.split('\n'):
+            line = line.strip()
+            if line and len(line.split()) >= 6:
+                first = line.split()[0].lower()
+                if any(first.startswith(v) for v in all_verbs):
+                    if line not in bullets:
+                        bullets.append(line)
+
     if not bullets:
         return 30.0, "No bullet points found", {}
 
@@ -118,10 +141,10 @@ def check_bullet_quality(resume_text: str) -> Tuple[float, str, Dict]:
     for b in bullets:
         b_lower = b.strip().lower()
         words = b.strip().split()
-        first_word = words[0].lower().rstrip('ed,s') if words else ""
+        first_word = words[0].lower() if words else ""
 
-        # Check for strong action verb start
-        is_strong = any(b_lower.startswith(v) for v in STRONG_VERBS)
+        # Check for strong action verb start (match beginning of first word)
+        is_strong = any(first_word.startswith(v) or first_word == v for v in STRONG_VERBS)
         is_weak = any(v in b_lower[:30] for v in WEAK_VERBS)
 
         if is_strong:
