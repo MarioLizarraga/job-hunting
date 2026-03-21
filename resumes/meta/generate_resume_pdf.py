@@ -271,21 +271,21 @@ def build_field_service(output_path):
         "Safran Electronics &amp; Defense \u2014 Redmond, WA",
     ))
     for b in [
-        "Built and maintained a UFactory 850 robotic test system \u2014 troubleshot field failures "
-        "across mechanical, electrical, firmware, and software subsystems and interfaces, cutting "
+        "Built and maintained a UFactory 850 robotic test system \u2014 performed fault isolation "
+        "across mechanical, electrical, firmware, and software subsystem interfaces, cutting "
         "test time by 67% and freeing 25+ hrs/week",
 
-        "Conducted failure analysis on force sensor data, identified root causes of recurring "
-        "failures, and drove cross-functional corrective actions with manufacturing and operations",
+        "Performed structured failure analysis on service data, identified top downtime drivers, "
+        "and drove cross-functional corrective actions with manufacturing, reliability, and operations",
 
         "Supervised 5 interns on AI defect detection and robotics \u2014 delivered a 92% accuracy "
-        "ML model and hardware prototype for vision-based inspection",
+        "ML model and hardware prototype for vision-based inspection and validation",
 
-        "Created 7+ service documents (setup, calibration, troubleshooting, failure modes), "
-        "enabling field technicians to maintain deployed systems independently",
+        "Created 7+ service documents (setup, calibration, troubleshooting, failure modes) and "
+        "recurring reporting on field health, enabling technicians to maintain deployed systems",
 
         "Designed test fixtures and end-effectors via iterative prototyping (SolidWorks, 3D "
-        "printing), applying DFM/DFA principles with spares strategy",
+        "printing), applying DFM/DFA principles to improve manufacturability and serviceability",
     ]:
         story.append(bullet(b, s))
 
@@ -296,10 +296,10 @@ def build_field_service(output_path):
         "Jenton International \u2014 Whitchurch, UK",
     ))
     for b in [
-        "Designed and commissioned custom automation equipment \u2014 mechanical layout, pneumatics, "
-        "subsystem integration for manufacturing process lines",
+        "Designed and commissioned custom automation equipment \u2014 mechanical assembly, harnessing, "
+        "connectors, and subsystem integration for manufacturing process lines",
         "Troubleshot electro-mechanical issues during build and commissioning, resolving fitment, "
-        "wiring, and alignment problems in collaboration with operations teams",
+        "rework, and alignment problems in collaboration with operations teams",
     ]:
         story.append(bullet(b, s))
 
@@ -343,15 +343,15 @@ def build_field_service(output_path):
     # Skills
     story.extend(section_header("SKILLS"))
     for sk in [
-        "<b>Robotics &amp; Electro-Mechanical:</b> robot arm troubleshooting, gantry systems, sensors "
-        "(force, temp, vibration), actuators, PLC, relay circuits, serial/I2C, fleet maintenance, "
-        "MTBF/MTTR, preventative maintenance",
+        "<b>Robotics &amp; Electro-Mechanical:</b> fault isolation, subsystem troubleshooting, sensors/actuators, "
+        "harnessing, connectors, fasteners, torque practices, basic metrology, fleet maintenance, "
+        "MTBF/MTTR, preventative maintenance, spares planning",
 
         "<b>Technical:</b> Python, C (STM32), SQL, Git, SolidWorks, CATIA V5, Autodesk Inventor, "
-        "Arduino, Raspberry Pi, Linux",
+        "Arduino, Raspberry Pi, Linux, service data analysis, field reporting",
 
-        "<b>Methods:</b> failure analysis, root cause analysis, DFM/DFA, GD&amp;T, machine learning, "
-        "computer vision",
+        "<b>Methods:</b> failure analysis, root cause analysis, fault isolation, DFM/DFA, serviceability, "
+        "GD&amp;T, corrective action validation, fit/finish, repairs, machine learning, computer vision",
     ]:
         story.append(Paragraph(sk, s['skills']))
 
