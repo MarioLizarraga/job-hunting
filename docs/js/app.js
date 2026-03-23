@@ -234,70 +234,137 @@ async function extractPdfText(file) {
 }
 
 /* ─── JD URL Fetcher ───────────────────────────────────────── */
+const CORS_PROXIES = [
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+];
+
+async function fetchWithProxy(url) {
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxyUrl = CORS_PROXIES[i](url);
+    try {
+      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+      if (resp.ok) {
+        const html = await resp.text();
+        if (html && html.length > 100) return html;
+      }
+    } catch (e) {
+      // Try next proxy
+    }
+  }
+  throw new Error('All proxies failed. The site may block automated access.');
+}
+
+function extractJdText(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Remove noise elements
+  doc.querySelectorAll('script, style, nav, footer, header, noscript, iframe, svg, img, link, meta, button, input, select, form').forEach(el => el.remove());
+
+  // Try targeted selectors for common job boards
+  const selectors = [
+    // Meta/Facebook
+    '[data-testid="job-details"]', '._8muv',
+    // LinkedIn
+    '.description__text', '.show-more-less-html__markup',
+    // Indeed
+    '#jobDescriptionText', '.jobsearch-jobDescriptionText',
+    // Greenhouse
+    '#content', '.posting-page',
+    // Lever
+    '.posting-categories', '.content',
+    // Workday
+    '[data-automation-id="jobPostingDescription"]',
+    // Generic
+    '[class*="jobDescription"]', '[class*="job-description"]', '[class*="JobDescription"]',
+    '.job-description', '.jobDescription', '#job-description',
+    '.job-details', '.posting-requirements', '.job-posting',
+    '[role="main"]', 'article', 'main',
+  ];
+
+  for (const sel of selectors) {
+    try {
+      const el = doc.querySelector(sel);
+      if (el && el.textContent.trim().length > 200) {
+        return cleanExtractedText(el);
+      }
+    } catch (e) { /* invalid selector, skip */ }
+  }
+
+  // Fallback: find the largest text block in the body
+  const body = doc.body;
+  if (!body) return '';
+
+  let best = '', bestLen = 0;
+  body.querySelectorAll('div, section, article').forEach(el => {
+    const t = el.textContent.trim();
+    if (t.length > bestLen && t.length > 200) {
+      bestLen = t.length;
+      best = t;
+    }
+  });
+
+  if (best) return cleanRawText(best);
+  return cleanRawText(body.textContent || '');
+}
+
+function cleanExtractedText(el) {
+  // Walk child nodes to preserve line breaks between block elements
+  let text = '';
+  const blocks = new Set(['DIV','P','LI','H1','H2','H3','H4','H5','H6','BR','TR','DT','DD','SECTION','ARTICLE','UL','OL']);
+
+  function walk(node) {
+    if (node.nodeType === 3) {
+      text += node.textContent;
+    } else if (node.nodeType === 1) {
+      if (blocks.has(node.tagName)) text += '\n';
+      if (node.tagName === 'LI') text += '- ';
+      for (const child of node.childNodes) walk(child);
+      if (blocks.has(node.tagName)) text += '\n';
+    }
+  }
+  walk(el);
+  return cleanRawText(text);
+}
+
+function cleanRawText(text) {
+  return text
+    .replace(/[ \t]+/g, ' ')          // collapse horizontal whitespace
+    .replace(/\n /g, '\n')            // trim leading spaces on lines
+    .replace(/ \n/g, '\n')            // trim trailing spaces on lines
+    .replace(/\n{3,}/g, '\n\n')       // collapse excess blank lines
+    .trim()
+    .substring(0, 8000);              // cap length
+}
+
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   const url = urlInput.value.trim();
   if (!url) { showToast('Enter a job posting URL', 'error'); return; }
+
+  // Basic URL validation
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    urlInput.value = 'https://' + url;
+  }
 
   const fetchBtn = document.getElementById('fetchJdBtn');
   fetchBtn.disabled = true;
   fetchBtn.textContent = 'Fetching...';
 
   try {
-    // Use allorigins CORS proxy
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-    const resp = await fetch(proxyUrl);
-    if (!resp.ok) throw new Error('Failed to fetch page (' + resp.status + ')');
-    const html = await resp.text();
-
-    // Parse HTML and extract text
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Remove script, style, nav, footer, header elements
-    doc.querySelectorAll('script, style, nav, footer, header, noscript, iframe, svg, img').forEach(el => el.remove());
-
-    // Try to find the main job content
-    let text = '';
-    const selectors = [
-      '[data-testid="job-description"]', // LinkedIn
-      '.job-description', '.jobDescription', '#job-description',
-      '.description__text', '.job-details', '.posting-requirements',
-      '[class*="jobDescription"]', '[class*="job-description"]',
-      'article', 'main', '.content', '#content',
-    ];
-
-    for (const sel of selectors) {
-      const el = doc.querySelector(sel);
-      if (el && el.textContent.trim().length > 100) {
-        text = el.textContent;
-        break;
-      }
-    }
-
-    // Fallback: get body text
-    if (!text || text.trim().length < 100) {
-      text = doc.body?.textContent || '';
-    }
-
-    // Clean up the text
-    text = text
-      .replace(/\s+/g, ' ')           // collapse whitespace
-      .replace(/\n{3,}/g, '\n\n')     // collapse blank lines
-      .replace(/\t+/g, ' ')           // tabs to spaces
-      .trim();
-
-    // Truncate if too long (keep first 5000 chars)
-    if (text.length > 5000) text = text.substring(0, 5000) + '\n\n[Truncated...]';
+    const html = await fetchWithProxy(urlInput.value.trim());
+    const text = extractJdText(html);
 
     if (text.length < 50) {
-      showToast('Could not extract meaningful text from this URL. Try pasting the JD manually.', 'error');
+      showToast('Could not extract job description. This site may require login or block scraping. Try pasting manually.', 'error');
     } else {
       document.getElementById('jdText').value = text;
       showToast('Job description loaded from URL', 'success');
     }
   } catch (err) {
-    showToast('Fetch failed: ' + err.message + '. Try pasting the JD manually.', 'error');
+    showToast('Fetch failed: ' + err.message, 'error');
   } finally {
     fetchBtn.disabled = false;
     fetchBtn.textContent = 'Fetch';
