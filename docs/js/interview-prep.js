@@ -181,7 +181,17 @@ function renderValuesTab(el, co) {
 /* ─── Question Interactions ────────────────────────────────── */
 function toggleQA(header) {
   const body = header.nextElementSibling;
-  body.classList.toggle('open');
+  const isOpen = body.classList.contains('open');
+
+  // Close all other open questions (accordion behavior)
+  document.querySelectorAll('.qa-card__body.open').forEach(b => b.classList.remove('open'));
+
+  // Toggle this one
+  if (!isOpen) {
+    body.classList.add('open');
+    // Scroll into view smoothly
+    setTimeout(() => header.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
 }
 
 function filterQuestions(type, btn) {
