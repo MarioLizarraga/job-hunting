@@ -234,119 +234,14 @@ async function extractPdfText(file) {
 }
 
 /* ─── JD URL Fetcher ───────────────────────────────────────── */
-const CORS_PROXIES = [
-  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-  url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-];
-
-async function fetchWithProxy(url) {
-  for (let i = 0; i < CORS_PROXIES.length; i++) {
-    const proxyUrl = CORS_PROXIES[i](url);
-    try {
-      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-      if (resp.ok) {
-        const html = await resp.text();
-        if (html && html.length > 100) return html;
-      }
-    } catch (e) {
-      // Try next proxy
-    }
-  }
-  throw new Error('All proxies failed. The site may block automated access.');
-}
-
-function extractJdText(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-
-  // Remove noise elements
-  doc.querySelectorAll('script, style, nav, footer, header, noscript, iframe, svg, img, link, meta, button, input, select, form').forEach(el => el.remove());
-
-  // Try targeted selectors for common job boards
-  const selectors = [
-    // Meta/Facebook
-    '[data-testid="job-details"]', '._8muv',
-    // LinkedIn
-    '.description__text', '.show-more-less-html__markup',
-    // Indeed
-    '#jobDescriptionText', '.jobsearch-jobDescriptionText',
-    // Greenhouse
-    '#content', '.posting-page',
-    // Lever
-    '.posting-categories', '.content',
-    // Workday
-    '[data-automation-id="jobPostingDescription"]',
-    // Generic
-    '[class*="jobDescription"]', '[class*="job-description"]', '[class*="JobDescription"]',
-    '.job-description', '.jobDescription', '#job-description',
-    '.job-details', '.posting-requirements', '.job-posting',
-    '[role="main"]', 'article', 'main',
-  ];
-
-  for (const sel of selectors) {
-    try {
-      const el = doc.querySelector(sel);
-      if (el && el.textContent.trim().length > 200) {
-        return cleanExtractedText(el);
-      }
-    } catch (e) { /* invalid selector, skip */ }
-  }
-
-  // Fallback: find the largest text block in the body
-  const body = doc.body;
-  if (!body) return '';
-
-  let best = '', bestLen = 0;
-  body.querySelectorAll('div, section, article').forEach(el => {
-    const t = el.textContent.trim();
-    if (t.length > bestLen && t.length > 200) {
-      bestLen = t.length;
-      best = t;
-    }
-  });
-
-  if (best) return cleanRawText(best);
-  return cleanRawText(body.textContent || '');
-}
-
-function cleanExtractedText(el) {
-  // Walk child nodes to preserve line breaks between block elements
-  let text = '';
-  const blocks = new Set(['DIV','P','LI','H1','H2','H3','H4','H5','H6','BR','TR','DT','DD','SECTION','ARTICLE','UL','OL']);
-
-  function walk(node) {
-    if (node.nodeType === 3) {
-      text += node.textContent;
-    } else if (node.nodeType === 1) {
-      if (blocks.has(node.tagName)) text += '\n';
-      if (node.tagName === 'LI') text += '- ';
-      for (const child of node.childNodes) walk(child);
-      if (blocks.has(node.tagName)) text += '\n';
-    }
-  }
-  walk(el);
-  return cleanRawText(text);
-}
-
-function cleanRawText(text) {
-  return text
-    .replace(/[ \t]+/g, ' ')          // collapse horizontal whitespace
-    .replace(/\n /g, '\n')            // trim leading spaces on lines
-    .replace(/ \n/g, '\n')            // trim trailing spaces on lines
-    .replace(/\n{3,}/g, '\n\n')       // collapse excess blank lines
-    .trim()
-    .substring(0, 8000);              // cap length
-}
-
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
-  const url = urlInput.value.trim();
+  let url = urlInput.value.trim();
   if (!url) { showToast('Enter a job posting URL', 'error'); return; }
 
-  // Basic URL validation
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    urlInput.value = 'https://' + url;
+    url = 'https://' + url;
+    urlInput.value = url;
   }
 
   const fetchBtn = document.getElementById('fetchJdBtn');
@@ -354,17 +249,39 @@ async function fetchJdFromUrl() {
   fetchBtn.textContent = 'Fetching...';
 
   try {
-    const html = await fetchWithProxy(urlInput.value.trim());
-    const text = extractJdText(html);
+    // Jina Reader renders JS and returns clean markdown — works with SPAs
+    const jinaUrl = 'https://r.jina.ai/' + url;
+    const resp = await fetch(jinaUrl, {
+      signal: AbortSignal.timeout(15000),
+      headers: { 'Accept': 'text/plain' },
+    });
 
-    if (text.length < 50) {
-      showToast('Could not extract job description. This site may require login or block scraping. Try pasting manually.', 'error');
-    } else {
-      document.getElementById('jdText').value = text;
-      showToast('Job description loaded from URL', 'success');
+    if (!resp.ok) throw new Error('Reader returned ' + resp.status);
+    let text = await resp.text();
+
+    if (!text || text.trim().length < 50) {
+      throw new Error('No content returned');
     }
+
+    // Clean up markdown artifacts
+    text = text
+      .replace(/!\[.*?\]\(.*?\)/g, '')         // remove images
+      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')   // links to plain text
+      .replace(/^#{1,6}\s*/gm, '')             // remove heading markers
+      .replace(/\*\*([^*]+)\*\*/g, '$1')       // bold to plain
+      .replace(/\*([^*]+)\*/g, '$1')           // italic to plain
+      .replace(/^\s*[-*]\s+/gm, '- ')          // normalize list items
+      .replace(/\n{3,}/g, '\n\n')              // collapse blank lines
+      .trim();
+
+    // Cap at 8000 chars
+    if (text.length > 8000) text = text.substring(0, 8000) + '\n\n[Truncated...]';
+
+    document.getElementById('jdText').value = text;
+    showToast('Job description loaded from URL', 'success');
+
   } catch (err) {
-    showToast('Fetch failed: ' + err.message, 'error');
+    showToast('Fetch failed: ' + err.message + '. Try pasting the JD manually.', 'error');
   } finally {
     fetchBtn.disabled = false;
     fetchBtn.textContent = 'Fetch';
@@ -534,6 +451,7 @@ function renderHistory() {
         <div class="history-card__title">${escapeHtml(h.filename)}</div>
         <div class="history-card__meta">${new Date(h.date).toLocaleString()} &middot; ${h.word_count} words</div>
       </div>
+      <button class="history-card__action" onclick="event.stopPropagation();createAppFromHistory('${h.id}')" title="Create Application">+App</button>
       <button class="history-card__delete" onclick="event.stopPropagation();deleteHistory('${h.id}')" title="Delete">&times;</button>
     </div>
   `).join('');
@@ -561,52 +479,98 @@ function clearHistory() {
   showToast('History cleared', 'info');
 }
 
+/* ─── History → Application ─────────────────────────────────── */
+function createAppFromHistory(historyId) {
+  const history = getHistory();
+  const entry = history.find(h => h.id === historyId);
+  if (!entry) return;
+
+  // Pre-fill the app modal with scan data
+  const modal = document.getElementById('app-modal');
+  modal.style.display = 'flex';
+  modal.querySelector('.modal__header h3').textContent = 'Add Application';
+
+  document.getElementById('app-company').value = '';
+  document.getElementById('app-title').value = '';
+  document.getElementById('app-status').value = 'draft';
+  document.getElementById('app-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('app-deadline').value = '';
+  document.getElementById('app-url').value = '';
+  document.getElementById('app-salary').value = '';
+  document.getElementById('app-notes').value = `Resume: ${entry.filename}\nScanned: ${new Date(entry.date).toLocaleDateString()}`;
+  document.getElementById('app-index').value = '';
+  document.getElementById('app-scan-id').value = historyId;
+
+  // Focus company field
+  setTimeout(() => document.getElementById('app-company').focus(), 100);
+}
+
 /* ─── Applications ─────────────────────────────────────────── */
 function renderApplications() {
   const apps = getApps();
   const tbody = document.getElementById('apps-tbody');
 
   if (apps.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--color-text-muted)">No applications tracked yet. Click "Add Application" to start.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--color-text-muted)">No applications tracked yet. Click "Add Application" to start.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = apps.map((a, i) => `
+  tbody.innerHTML = apps.map((a, i) => {
+    const scores = a.scanScores;
+    const scoreHtml = scores
+      ? `<div style="display:flex;gap:4px">
+          ${scores.ai != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ai)}">${scores.ai}</span>` : ''}
+          ${scores.ats != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ats)}">${scores.ats}</span>` : ''}
+          ${scores.human != null ? `<span class="mini-score" style="background:${getScoreColor(scores.human)}">${scores.human}</span>` : ''}
+         </div>`
+      : '<span style="color:var(--color-text-muted)">-</span>';
+
+    const linkHtml = a.url
+      ? `<a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" class="app-link" onclick="event.stopPropagation()" title="${escapeHtml(a.url)}">Open</a>`
+      : '';
+
+    return `
     <tr>
       <td style="font-weight:600;color:var(--color-heading)">${escapeHtml(a.company)}</td>
       <td>${escapeHtml(a.title)}</td>
       <td><span class="status-badge status-badge--${a.status || 'draft'}">${a.status || 'draft'}</span></td>
-      <td>${a.date || ''}</td>
+      <td>${scoreHtml}</td>
+      <td>${a.salary || ''}</td>
       <td>${a.deadline || ''}</td>
+      <td>${linkHtml}</td>
       <td>
         <button class="btn--icon" onclick="editApp(${i})" title="Edit">&#9998;</button>
         <button class="btn--icon" onclick="deleteApp(${i})" title="Delete" style="margin-left:4px">&times;</button>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 function showAppModal(index) {
   const apps = getApps();
-  const app = index != null ? apps[index] : { company: '', title: '', status: 'draft', date: '', deadline: '', notes: '', url: '' };
+  const app = index != null ? apps[index] : { company: '', title: '', status: 'draft', date: '', deadline: '', notes: '', url: '', salary: '', scanId: '' };
   const isEdit = index != null;
 
   const modal = document.getElementById('app-modal');
   modal.style.display = 'flex';
   modal.querySelector('.modal__header h3').textContent = isEdit ? 'Edit Application' : 'Add Application';
 
-  document.getElementById('app-company').value = app.company;
-  document.getElementById('app-title').value = app.title;
+  document.getElementById('app-company').value = app.company || '';
+  document.getElementById('app-title').value = app.title || '';
   document.getElementById('app-status').value = app.status || 'draft';
   document.getElementById('app-date').value = app.date || '';
   document.getElementById('app-deadline').value = app.deadline || '';
   document.getElementById('app-url').value = app.url || '';
+  document.getElementById('app-salary').value = app.salary || '';
   document.getElementById('app-notes').value = app.notes || '';
   document.getElementById('app-index').value = index != null ? index : '';
+  document.getElementById('app-scan-id').value = app.scanId || '';
 }
 
 function saveApp() {
   const index = document.getElementById('app-index').value;
+  const scanId = document.getElementById('app-scan-id').value;
+
   const app = {
     company: document.getElementById('app-company').value,
     title: document.getElementById('app-title').value,
@@ -614,8 +578,28 @@ function saveApp() {
     date: document.getElementById('app-date').value,
     deadline: document.getElementById('app-deadline').value,
     url: document.getElementById('app-url').value,
+    salary: document.getElementById('app-salary').value,
     notes: document.getElementById('app-notes').value,
+    scanId: scanId || '',
   };
+
+  // Attach scan scores if linked to a history entry
+  if (scanId) {
+    const entry = getHistory().find(h => h.id === scanId);
+    if (entry) {
+      app.scanScores = {
+        ai: entry.ai_score,
+        ats: entry.ats_score,
+        human: entry.human_score,
+      };
+    }
+  }
+  // Preserve existing scores on edit if no new scanId
+  if (index !== '' && !scanId) {
+    const existing = getApps()[parseInt(index)];
+    if (existing?.scanScores) app.scanScores = existing.scanScores;
+    if (existing?.scanId) app.scanId = existing.scanId;
+  }
 
   if (!app.company || !app.title) { showToast('Company and title are required', 'error'); return; }
 

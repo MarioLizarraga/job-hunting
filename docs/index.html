@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resume Screener</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128203;</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -161,8 +162,10 @@
               <th>Company</th>
               <th>Position</th>
               <th>Status</th>
-              <th>Applied</th>
+              <th>Scores</th>
+              <th>Salary</th>
               <th>Deadline</th>
+              <th>Link</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -182,6 +185,7 @@
       </div>
       <div class="modal__body">
         <input type="hidden" id="app-index">
+        <input type="hidden" id="app-scan-id">
         <div class="form__row">
           <div class="form__group">
             <label>Company</label>
@@ -214,9 +218,13 @@
             <input type="date" id="app-deadline">
           </div>
           <div class="form__group">
-            <label>Job URL</label>
-            <input type="text" id="app-url" placeholder="https://...">
+            <label>Salary Range</label>
+            <input type="text" id="app-salary" placeholder="e.g. $120k-$160k">
           </div>
+        </div>
+        <div class="form__group">
+          <label>Job URL</label>
+          <input type="text" id="app-url" placeholder="https://...">
         </div>
         <div class="form__group">
           <label>Notes</label>

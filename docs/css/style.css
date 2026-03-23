@@ -493,6 +493,10 @@ h1, h2, h3, h4 { color: var(--color-heading); }
 .history-card__info { flex: 1; min-width: 0; }
 .history-card__title { font-size: 0.9rem; font-weight: 600; color: var(--color-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .history-card__meta { font-size: 0.75rem; color: var(--color-text-muted); }
+.history-card__action {
+  background: none; border: 1px solid var(--color-accent); color: var(--color-accent); cursor: pointer; padding: 4px 10px; font-size: 0.7rem; font-weight: 600; border-radius: var(--radius-full); font-family: inherit; transition: var(--transition); white-space: nowrap;
+}
+.history-card__action:hover { background: var(--color-accent-glow); }
 .history-card__delete {
   background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 8px; font-size: 1.1rem; border-radius: var(--radius-sm); transition: var(--transition);
 }
@@ -554,6 +558,30 @@ h1, h2, h3, h4 { color: var(--color-heading); }
 .status-badge--interview { background: rgba(107,207,142,0.15); color: var(--color-success); }
 .status-badge--rejected { background: rgba(207,107,107,0.15); color: var(--color-error); }
 .status-badge--offer { background: rgba(107,207,142,0.25); color: var(--color-success); }
+
+.mini-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.app-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.app-link:hover { background: var(--color-accent-glow); }
 
 /* ─── Modal ─────────────────────────────────────────────────── */
 .modal-overlay {
