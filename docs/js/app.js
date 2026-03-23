@@ -371,6 +371,114 @@ function parseJinaHeaders(raw) {
   return headers;
 }
 
+/* ─── Salary Extraction (comprehensive) ────────────────────── */
+function extractSalary(text) {
+  const fmtNum = (n) => {
+    if (!n) return '';
+    const num = parseFloat(n.replace(/,/g, ''));
+    if (num >= 1000) return '$' + Math.round(num / 1000) + 'k';
+    if (num > 0) return '$' + num + 'k';
+    return '';
+  };
+
+  // All range patterns — each returns [full, low, high]
+  const RANGE_PATTERNS = [
+    // Meta: "$173,000/year to $245,000/year + bonus"
+    /\$([\d,]+)(?:\.\d{0,2})?(?:\/(?:year|yr))?\s+to\s+\$([\d,]+)(?:\.\d{0,2})?(?:\/(?:year|yr))?/ig,
+    // Google/generic: "$136,000-$200,000" or "$136,000 - $200,000"
+    /\$([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*\$([\d,]+)(?:\.\d{0,2})?/ig,
+    // Microsoft: "USD $124,800 - $266,800 per year"
+    /USD\s*\$\s*([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*\$\s*([\d,]+)(?:\.\d{0,2})?/ig,
+    // K notation: "$85K - $120K" or "$85k-$120k"
+    /\$([\d.]+)\s*[kK]\s*[-–—]\s*\$?([\d.]+)\s*[kK]/ig,
+    // Amazon: "117,300.00 - 160,000.00 USD annually"
+    /([\d,]+\.\d{2})\s*[-–—]\s*([\d,]+\.\d{2})\s*(?:USD|usd)/ig,
+    // Bare numbers + USD: "117,300 - 160,000 USD"
+    /([\d,]{5,10})(?:\.\d{0,2})?\s*[-–—]\s*([\d,]{5,10})(?:\.\d{0,2})?\s*(?:USD|usd)/ig,
+    // Bare numbers + per year: "120,000 - 160,000 per year"
+    /([\d,]{5,10})(?:\.\d{0,2})?\s*[-–—]\s*([\d,]{5,10})(?:\.\d{0,2})?\s*(?:per\s*year|annually|\/year|\/yr|a\s*year|per\s*annum|pa)\b/ig,
+    // $X to $Y (word separator)
+    /\$([\d,]+)(?:\.\d{0,2})?\s+to\s+\$([\d,]+)(?:\.\d{0,2})?/ig,
+    // UK: £30,000 - £50,000
+    /£([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*£([\d,]+)(?:\.\d{0,2})?/ig,
+    // EUR: €50,000 - €70,000
+    /€([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*€([\d,]+)(?:\.\d{0,2})?/ig,
+    // CAD/AUD: "CAD 50,000 - 70,000"
+    /(?:CAD|AUD)\s*([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*([\d,]+)(?:\.\d{0,2})?/ig,
+    // Labeled: "Salary: $X - $Y" or "Base: $X-$Y" or "Compensation: $X to $Y"
+    /(?:salary|compensation|pay|base|total\s*comp|earning)[:\s]+\$?([\d,]+)(?:\.\d{0,2})?\s*[-–—to]+\s*\$?([\d,]+)/ig,
+    // Hourly: "$25 - $35 per hour" or "$25/hr - $35/hr"
+    /\$([\d.]+)\s*(?:\/hr)?\s*[-–—]\s*\$([\d.]+)\s*(?:\/hr|per\s*hour|an?\s*hour)/ig,
+    // Monthly: "$8,000 - $12,000 per month" or "a month"
+    /\$([\d,]+)(?:\.\d{0,2})?\s*[-–—]\s*\$([\d,]+)(?:\.\d{0,2})?\s*(?:per\s*month|a\s*month|\/month|\/mo)/ig,
+    // OTE: "OTE: $X - $Y" or "On-Target Earnings: $X"
+    /(?:OTE|on[- ]target\s*earnings?)[:\s]+\$?([\d,]+)(?:\.\d{0,2})?\s*[-–—to]*\s*\$?([\d,]+)?/ig,
+  ];
+
+  // Collect all candidates
+  const candidates = [];
+  for (const pat of RANGE_PATTERNS) {
+    let m;
+    while ((m = pat.exec(text)) !== null) {
+      const rawLow = m[1].replace(/,/g, '');
+      const rawHigh = (m[2] || '').replace(/,/g, '');
+      let low = parseFloat(rawLow) || 0;
+      let high = parseFloat(rawHigh) || 0;
+
+      // Detect if hourly (< $200) and convert to annual estimate
+      const isHourly = /(?:\/hr|per\s*hour|an?\s*hour)/i.test(m[0]);
+      const isMonthly = /(?:\/month|per\s*month|a\s*month|\/mo)/i.test(m[0]);
+      let type = 'annual';
+      if (isHourly) { low *= 2080; high *= 2080; type = 'hourly'; }
+      else if (isMonthly) { low *= 12; high *= 12; type = 'monthly'; }
+      // K notation
+      else if (low < 1000 && low > 10) { low *= 1000; high *= 1000; }
+
+      // Validate: looks like plausible annual compensation
+      if (low < 15000 || low > 2000000) continue;
+      if (high && (high < low || high > 5000000)) continue;
+
+      candidates.push({ low, high: high || low, raw: m[0], type });
+    }
+  }
+
+  // Also check for single salary values if no ranges found
+  if (candidates.length === 0) {
+    const singlePatterns = [
+      /\$([\d,]+)(?:\.\d{0,2})?\s*(?:\/year|per\s*year|annually|a\s*year|per\s*annum)/ig,
+      /(?:up\s*to|starting\s*at|from)\s*\$([\d,]+)/ig,
+      /\$([\d,]+)\s*\+/ig, // "$100,000+"
+    ];
+    for (const pat of singlePatterns) {
+      let m;
+      while ((m = pat.exec(text)) !== null) {
+        const val = parseFloat(m[1].replace(/,/g, ''));
+        if (val >= 30000 && val <= 2000000) {
+          candidates.push({ low: val, high: val, raw: m[0], type: 'single' });
+        }
+      }
+    }
+  }
+
+  if (candidates.length === 0) return '';
+
+  // Pick the best candidate: prefer ranges over singles, then highest high value
+  candidates.sort((a, b) => {
+    // Prefer actual ranges over single values
+    const aIsRange = a.high > a.low ? 1 : 0;
+    const bIsRange = b.high > b.low ? 1 : 0;
+    if (aIsRange !== bIsRange) return bIsRange - aIsRange;
+    // Then by highest value (likely the main salary, not a smaller bonus number)
+    return b.high - a.high;
+  });
+
+  const best = candidates[0];
+  if (best.high > best.low) {
+    return fmtNum(String(best.low)) + ' - ' + fmtNum(String(best.high));
+  }
+  return fmtNum(String(best.low));
+}
+
 /* ─── Job Metadata Extraction (v2 — uses Jina headers) ───── */
 function extractJobMetadata(text, url, jinaHeaders) {
   const meta = { company: '', title: '', salary: '', url: url || '' };
@@ -484,47 +592,8 @@ function extractJobMetadata(text, url, jinaHeaders) {
     if (meta.title.length > 70) meta.title = meta.title.substring(0, 70).trim();
   }
 
-  // ── Salary: find ALL salary ranges, pick the one that looks like annual comp ──
-  const salaryRangePatterns = [
-    // "$173,000/year to $245,000/year" — Meta format
-    /\$([\d,]+)(?:\.?\d{0,2})?(?:\/year)?\s+to\s+\$([\d,]+)(?:\.?\d{0,2})?(?:\/year)?/ig,
-    // "$120,000 - $160,000" or "$120,000–$160,000"
-    /\$([\d,]+)(?:\.?\d{0,2})?\s*[-–—]\s*\$([\d,]+)(?:\.?\d{0,2})?/ig,
-    // "$120K - $160K"
-    /\$([\d.]+)\s*[kK]\s*[-–—to]+\s*\$?([\d.]+)\s*[kK]/ig,
-    // "117,300.00 - 160,000.00 USD annually" — Amazon format (no $ sign!)
-    /([\d,]+\.?\d{0,2})\s*[-–—]\s*([\d,]+\.?\d{0,2})\s*(?:USD|usd)\s*(?:annually|per\s*year|\/year|\/yr)?/ig,
-    // "XX,XXX - YY,YYY per year/annually" (no $ or USD)
-    /([\d,]{5,10})(?:\.?\d{0,2})?\s*[-–—]\s*([\d,]{5,10})(?:\.?\d{0,2})?\s*(?:per\s*year|annually|\/year)/ig,
-    // "salary/compensation/pay range: XX - YY" with optional $ and qualifiers
-    /(?:salary|compensation|pay|base)\s*(?:range)?[:\s]+\$?([\d,]+)(?:\.?\d{0,2})?\s*[-–—to]+\s*\$?([\d,]+)/ig,
-  ];
-
-  const fmt = (n) => {
-    if (!n) return '';
-    const num = parseFloat(n.replace(/,/g, ''));
-    if (num >= 1000) return '$' + Math.round(num / 1000) + 'k';
-    if (num > 0 && num < 1000) return '$' + num + 'k';
-    return '';
-  };
-
-  // Collect all salary-range candidates, pick the best one
-  let bestSalary = '', bestHigh = 0;
-  for (const pat of salaryRangePatterns) {
-    let m;
-    while ((m = pat.exec(body)) !== null) {
-      const low = parseFloat(m[1].replace(/,/g, ''));
-      const high = parseFloat(m[2].replace(/,/g, ''));
-      // Must look like annual salary (>$30k, <$1M)
-      const lo = low < 1000 ? low * 1000 : low;
-      const hi = high < 1000 ? high * 1000 : high;
-      if (lo >= 30000 && hi <= 1000000 && hi > lo && hi > bestHigh) {
-        bestHigh = hi;
-        bestSalary = fmt(m[1]) + ' - ' + fmt(m[2]);
-      }
-    }
-  }
-  if (bestSalary) meta.salary = bestSalary;
+  // ── Salary extraction: comprehensive multi-format scanner ──
+  meta.salary = extractSalary(body);
 
   return meta;
 }
