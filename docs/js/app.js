@@ -447,7 +447,9 @@ async function fetchJdFromUrl() {
     let cleaned = cleanFetchedContent(jinaHeaders.body || rawText);
 
     document.getElementById('jdText').value = cleaned;
-    lastFetchedJd = extractJobMetadata(rawText, url, jinaHeaders);
+    // Pass cleaned text for body scanning (raw has JSON/CSS noise on Microsoft etc.)
+    const cleanedHeaders = { ...jinaHeaders, body: cleaned };
+    lastFetchedJd = extractJobMetadata(cleaned, url, cleanedHeaders);
     showToast(`Loaded: ${lastFetchedJd.title || 'Job'} at ${lastFetchedJd.company || 'Unknown'}`, 'success', 4000);
 
   } catch (err) {
@@ -642,11 +644,22 @@ function extractJobMetadata(text, url, jinaHeaders) {
   // Strategy 1: Jina Title: header (best for Amazon, Workday, Lever — contains real title)
   const jinaTitle = (jh.title || '').trim();
   if (jinaTitle && !GENERIC_TITLE.test(jinaTitle)) {
-    // Lever format: "Company - Job Title"
-    const leverSplit = jinaTitle.split(/\s*[-–—|]\s*/);
-    if (leverSplit.length >= 2 && leverSplit[0].length < 30 && leverSplit.slice(1).join(' - ').length > 3) {
-      if (!meta.company) meta.company = leverSplit[0].trim();
-      meta.title = leverSplit.slice(1).join(' - ').trim();
+    // Split on separators: "Job Title | Company Name" or "Company - Job Title"
+    const parts = jinaTitle.split(/\s*[-–—|]\s*/).filter(p => p.length > 1);
+    if (parts.length >= 2) {
+      // Find which parts are generic (site names) vs. real titles
+      const realParts = parts.filter(p => !GENERIC_TITLE.test(p));
+      const genericParts = parts.filter(p => GENERIC_TITLE.test(p));
+      if (realParts.length > 0) {
+        // Pick the part with a role keyword as title, or the longest real part
+        const titlePart = realParts.find(p => ROLE_KEYWORDS.test(p)) || realParts[0];
+        meta.title = titlePart.trim();
+        // If there's a non-generic non-title part, it might be the company
+        const otherParts = realParts.filter(p => p !== titlePart);
+        if (otherParts.length > 0 && !meta.company) meta.company = otherParts[0].trim();
+      } else {
+        meta.title = parts[0].trim();
+      }
     } else {
       meta.title = jinaTitle;
     }
