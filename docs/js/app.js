@@ -267,6 +267,29 @@ async function extractPdfText(file) {
 let lastFetchedJd = null;
 let lastRawJinaText = '';
 
+async function fetchWithFallback(url) {
+  const methods = [
+    { name: 'Jina Reader', fetch: () => fetch('https://r.jina.ai/' + url, { signal: AbortSignal.timeout(30000), headers: { 'Accept': 'text/plain' } }) },
+    { name: 'Jina (retry)', fetch: () => fetch('https://r.jina.ai/' + url, { signal: AbortSignal.timeout(30000), headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' } }) },
+    { name: 'corsproxy.io', fetch: () => fetch('https://corsproxy.io/?' + encodeURIComponent(url), { signal: AbortSignal.timeout(20000) }) },
+    { name: 'allorigins', fetch: () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { signal: AbortSignal.timeout(20000) }) },
+  ];
+
+  const errors = [];
+  for (const method of methods) {
+    try {
+      const resp = await method.fetch();
+      if (!resp.ok) { errors.push(`${method.name}: HTTP ${resp.status}`); continue; }
+      const text = await resp.text();
+      if (text && text.trim().length > 100) return text;
+      errors.push(`${method.name}: empty response`);
+    } catch (e) {
+      errors.push(`${method.name}: ${e.message}`);
+    }
+  }
+  throw new Error('All methods failed (' + errors.join('; ') + ')');
+}
+
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   let url = urlInput.value.trim();
@@ -278,18 +301,11 @@ async function fetchJdFromUrl() {
   fetchBtn.textContent = 'Fetching...';
 
   try {
-    const jinaUrl = 'https://r.jina.ai/' + url;
-    const resp = await fetch(jinaUrl, { signal: AbortSignal.timeout(15000), headers: { 'Accept': 'text/plain' } });
-    if (!resp.ok) throw new Error('Reader returned ' + resp.status);
-    const rawText = await resp.text();
-    if (!rawText || rawText.trim().length < 50) throw new Error('No content returned');
-
+    const rawText = await fetchWithFallback(url);
     lastRawJinaText = rawText;
 
-    // Parse Jina headers before cleaning
     const jinaHeaders = parseJinaHeaders(rawText);
 
-    // Clean markdown for display
     let cleaned = (jinaHeaders.body || rawText)
       .replace(/!\[.*?\]\(.*?\)/g, '')
       .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
