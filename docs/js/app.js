@@ -368,6 +368,62 @@ async function fetchWithFallback(url) {
   throw new Error('All methods failed (' + errors.join('; ') + ')');
 }
 
+function cleanFetchedContent(raw) {
+  let text = raw;
+
+  // 1. Remove JSON blobs (Microsoft injects theme config as JSON in markdown)
+  text = text.replace(/`\{[\s\S]*?\}`/g, '');          // backtick-wrapped JSON
+  text = text.replace(/\{[^{}]*"[^"]*":\s*"[^"]*"[^{}]*\}/g, ''); // inline JSON objects
+  text = text.replace(/\{"[\s\S]{50,}?\}/g, '');        // large JSON blocks
+
+  // 2. Remove code blocks
+  text = text.replace(/```[\s\S]*?```/g, '');
+
+  // 3. Remove HTML tags that leak through
+  text = text.replace(/<[^>]+>/g, '');
+
+  // 4. Remove CSS/style content
+  text = text.replace(/[a-z-]+\s*:\s*#[0-9a-fA-F]{3,8}\s*;?/g, '');  // color: #xxx
+  text = text.replace(/[a-z-]+\s*:\s*"[^"]*"\s*;?/g, '');             // prop: "value"
+
+  // 5. Remove image references and markdown links (keep link text)
+  text = text.replace(/!\[.*?\]\(.*?\)/g, '');
+  text = text.replace(/\[([^\]]+)\]\(.*?\)/g, '$1');
+
+  // 6. Remove markdown formatting but keep content
+  text = text.replace(/^#{1,6}\s*/gm, '');
+  text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
+  text = text.replace(/\*([^*]+)\*/g, '$1');
+  text = text.replace(/^\s*[-*]\s+/gm, '- ');
+
+  // 7. Remove lines that are clearly not job content
+  const lines = text.split('\n');
+  const filtered = lines.filter(line => {
+    const t = line.trim();
+    if (t.length === 0) return true;  // keep blank lines for spacing
+    if (t.length < 3) return false;
+    // Skip navigation/UI noise
+    if (/^(Skip to|Sign in|Sign up|Log in|Create account|Cookie|Privacy|Terms|Accept all|Reject|©|All rights|Follow us)/i.test(t)) return false;
+    // Skip lines that are just URLs
+    if (/^https?:\/\/\S+$/.test(t)) return false;
+    // Skip lines that look like CSS/code
+    if (/^[a-z-]+\s*{/.test(t)) return false;
+    if (/^\s*[a-z-]+\s*:\s*[#"'\d]/.test(t) && t.length < 80) return false;
+    // Skip bracket noise
+    if (/^[\[\]{}(),;]+$/.test(t)) return false;
+    return true;
+  });
+
+  text = filtered.join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  // 8. Cap length
+  if (text.length > 8000) text = text.substring(0, 8000) + '\n\n[Truncated...]';
+
+  return text;
+}
+
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   let url = urlInput.value.trim();
@@ -388,17 +444,7 @@ async function fetchJdFromUrl() {
 
     const jinaHeaders = parseJinaHeaders(rawText);
 
-    let cleaned = (jinaHeaders.body || rawText)
-      .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
-      .replace(/^#{1,6}\s*/gm, '')
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/^\s*[-*]\s+/gm, '- ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-
-    if (cleaned.length > 8000) cleaned = cleaned.substring(0, 8000) + '\n\n[Truncated...]';
+    let cleaned = cleanFetchedContent(jinaHeaders.body || rawText);
 
     document.getElementById('jdText').value = cleaned;
     lastFetchedJd = extractJobMetadata(rawText, url, jinaHeaders);
