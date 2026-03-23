@@ -100,19 +100,26 @@
         </div>
 
         <div class="screener__grid">
-          <div class="upload-card" id="resumeCard" onclick="document.getElementById('resumeFile').click()">
-            <label>Resume (PDF or Text)</label>
-            <button class="upload-card__btn" type="button">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Choose File
-            </button>
-            <input type="file" id="resumeFile" accept=".pdf,.txt,.md" onchange="onFileSelect(this)">
-            <div class="upload-card__name" id="fileName" style="display:none"></div>
-            <div class="upload-card__hint">Text-based PDF only (not scanned images)</div>
+          <div>
+            <div class="upload-card" id="resumeCard" onclick="document.getElementById('resumeFile').click()">
+              <label>Upload Resume (PDF or Text)</label>
+              <button class="upload-card__btn" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Choose File
+              </button>
+              <input type="file" id="resumeFile" accept=".pdf,.txt,.md" onchange="onFileSelect(this)">
+              <div class="upload-card__name" id="fileName" style="display:none"></div>
+              <div class="upload-card__hint">Text-based PDF only (not scanned images)</div>
+            </div>
+            <div id="resume-library"></div>
           </div>
           <div class="jd-card">
             <label>Job Description</label>
-            <textarea id="jdText" placeholder="Paste the full job description here, including required and preferred qualifications..."></textarea>
+            <div class="jd-url-row">
+              <input type="text" id="jdUrl" class="jd-url-input" placeholder="Paste job posting URL to auto-fetch...">
+              <button class="btn btn--outline btn--sm" id="fetchJdBtn" onclick="fetchJdFromUrl()">Fetch</button>
+            </div>
+            <textarea id="jdText" placeholder="Paste the full job description here, or use the URL field above to auto-fetch..."></textarea>
           </div>
         </div>
 

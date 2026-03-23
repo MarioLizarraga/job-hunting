@@ -7,6 +7,7 @@
 const STORAGE_KEYS = {
   history: 'rs_history',
   applications: 'rs_applications',
+  resumes: 'rs_resumes',
   theme: 'rs_theme',
 };
 
@@ -14,6 +15,8 @@ function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.hist
 function saveHistory(h) { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(h)); }
 function getApps() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.applications) || '[]'); }
 function saveApps(a) { localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(a)); }
+function getResumes() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.resumes) || '[]'); }
+function saveResumes(r) { localStorage.setItem(STORAGE_KEYS.resumes, JSON.stringify(r)); }
 
 /* ─── Toast ────────────────────────────────────────────────── */
 function showToast(message, type = 'info', duration = 3000) {
@@ -59,6 +62,7 @@ function navigate(page) {
   currentPage = page;
 
   if (page === 'dashboard') renderDashboard();
+  else if (page === 'screener') { renderResumeLibrary(); }
   else if (page === 'history') renderHistory();
   else if (page === 'applications') renderApplications();
 }
@@ -111,16 +115,99 @@ function renderDashboard() {
   }
 }
 
+/* ─── Resume Library ───────────────────────────────────────── */
+let selectedResumeId = null;
+
+function renderResumeLibrary() {
+  const resumes = getResumes();
+  const container = document.getElementById('resume-library');
+  if (!container) return;
+
+  if (resumes.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="resume-lib">
+      <div class="resume-lib__label">Saved Resumes</div>
+      <div class="resume-lib__list">
+        ${resumes.map(r => `
+          <button class="resume-lib__item ${selectedResumeId === r.id ? 'active' : ''}" onclick="selectResume('${r.id}')">
+            <span class="resume-lib__name">${escapeHtml(r.name)}</span>
+            <span class="resume-lib__meta">${r.wordCount} words</span>
+            <span class="resume-lib__delete" onclick="event.stopPropagation();deleteResume('${r.id}')" title="Remove">&times;</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function selectResume(id) {
+  const resumes = getResumes();
+  const resume = resumes.find(r => r.id === id);
+  if (!resume) return;
+
+  selectedResumeId = selectedResumeId === id ? null : id;
+
+  // Update UI
+  const card = document.getElementById('resumeCard');
+  const nameEl = document.getElementById('fileName');
+  if (selectedResumeId) {
+    card.classList.add('has-file');
+    nameEl.textContent = resume.name;
+    nameEl.style.display = 'block';
+    // Clear file input since we're using saved resume
+    document.getElementById('resumeFile').value = '';
+  } else {
+    card.classList.remove('has-file');
+    nameEl.style.display = 'none';
+  }
+  renderResumeLibrary();
+}
+
+function deleteResume(id) {
+  const resumes = getResumes().filter(r => r.id !== id);
+  saveResumes(resumes);
+  if (selectedResumeId === id) selectedResumeId = null;
+  renderResumeLibrary();
+  showToast('Resume removed from library', 'info');
+}
+
+async function saveResumeToLibrary(name, text) {
+  const resumes = getResumes();
+  // Check for duplicate name
+  const existing = resumes.findIndex(r => r.name === name);
+  const entry = {
+    id: Date.now().toString(),
+    name,
+    text,
+    wordCount: text.split(/\s+/).length,
+    date: new Date().toISOString(),
+  };
+  if (existing >= 0) {
+    entry.id = resumes[existing].id;
+    resumes[existing] = entry;
+  } else {
+    resumes.push(entry);
+  }
+  saveResumes(resumes);
+  renderResumeLibrary();
+}
+
 /* ─── Screener ─────────────────────────────────────────────── */
 let currentResumeText = '';
 
 function onFileSelect(input) {
-  const card = document.getElementById('resumeCard');
-  const nameEl = document.getElementById('fileName');
   if (input.files.length > 0) {
+    // Deselect any saved resume when uploading new file
+    selectedResumeId = null;
+    const card = document.getElementById('resumeCard');
+    const nameEl = document.getElementById('fileName');
     card.classList.add('has-file');
     nameEl.textContent = input.files[0].name;
     nameEl.style.display = 'block';
+    renderResumeLibrary();
   }
 }
 
@@ -146,13 +233,106 @@ async function extractPdfText(file) {
   });
 }
 
+/* ─── JD URL Fetcher ───────────────────────────────────────── */
+async function fetchJdFromUrl() {
+  const urlInput = document.getElementById('jdUrl');
+  const url = urlInput.value.trim();
+  if (!url) { showToast('Enter a job posting URL', 'error'); return; }
+
+  const fetchBtn = document.getElementById('fetchJdBtn');
+  fetchBtn.disabled = true;
+  fetchBtn.textContent = 'Fetching...';
+
+  try {
+    // Use allorigins CORS proxy
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const resp = await fetch(proxyUrl);
+    if (!resp.ok) throw new Error('Failed to fetch page (' + resp.status + ')');
+    const html = await resp.text();
+
+    // Parse HTML and extract text
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Remove script, style, nav, footer, header elements
+    doc.querySelectorAll('script, style, nav, footer, header, noscript, iframe, svg, img').forEach(el => el.remove());
+
+    // Try to find the main job content
+    let text = '';
+    const selectors = [
+      '[data-testid="job-description"]', // LinkedIn
+      '.job-description', '.jobDescription', '#job-description',
+      '.description__text', '.job-details', '.posting-requirements',
+      '[class*="jobDescription"]', '[class*="job-description"]',
+      'article', 'main', '.content', '#content',
+    ];
+
+    for (const sel of selectors) {
+      const el = doc.querySelector(sel);
+      if (el && el.textContent.trim().length > 100) {
+        text = el.textContent;
+        break;
+      }
+    }
+
+    // Fallback: get body text
+    if (!text || text.trim().length < 100) {
+      text = doc.body?.textContent || '';
+    }
+
+    // Clean up the text
+    text = text
+      .replace(/\s+/g, ' ')           // collapse whitespace
+      .replace(/\n{3,}/g, '\n\n')     // collapse blank lines
+      .replace(/\t+/g, ' ')           // tabs to spaces
+      .trim();
+
+    // Truncate if too long (keep first 5000 chars)
+    if (text.length > 5000) text = text.substring(0, 5000) + '\n\n[Truncated...]';
+
+    if (text.length < 50) {
+      showToast('Could not extract meaningful text from this URL. Try pasting the JD manually.', 'error');
+    } else {
+      document.getElementById('jdText').value = text;
+      showToast('Job description loaded from URL', 'success');
+    }
+  } catch (err) {
+    showToast('Fetch failed: ' + err.message + '. Try pasting the JD manually.', 'error');
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.textContent = 'Fetch';
+  }
+}
+
 async function analyze() {
   const fileInput = document.getElementById('resumeFile');
   const jdText = document.getElementById('jdText').value;
   const file = fileInput.files[0];
 
-  if (!file) { showToast('Please upload a resume file', 'error'); return; }
-  if (!jdText.trim()) { showToast('Please paste a job description', 'error'); return; }
+  // Get resume text from saved library or uploaded file
+  let resumeText = '';
+  let resumeName = '';
+
+  if (selectedResumeId) {
+    const resume = getResumes().find(r => r.id === selectedResumeId);
+    if (resume) {
+      resumeText = resume.text;
+      resumeName = resume.name;
+    }
+  } else if (file) {
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      resumeText = await extractPdfText(file);
+    } else {
+      resumeText = await file.text();
+    }
+    resumeName = file.name;
+  }
+
+  if (!resumeText || resumeText.trim().length < 50) {
+    showToast('Select a saved resume or upload a file', 'error');
+    return;
+  }
+  if (!jdText.trim()) { showToast('Please paste a job description or fetch from URL', 'error'); return; }
 
   const checks = [];
   if (document.getElementById('checkAI').checked) checks.push('ai');
@@ -165,18 +345,6 @@ async function analyze() {
   document.getElementById('analyzeBtn').disabled = true;
 
   try {
-    let resumeText;
-    if (file.name.toLowerCase().endsWith('.pdf')) {
-      resumeText = await extractPdfText(file);
-    } else {
-      resumeText = await file.text();
-    }
-
-    if (!resumeText || resumeText.trim().length < 50) {
-      showToast('Could not extract text from resume. Ensure it is a text-based PDF.', 'error');
-      return;
-    }
-
     currentResumeText = resumeText;
     const results = {};
 
@@ -186,10 +354,16 @@ async function analyze() {
 
     renderResults(results);
 
+    // Offer to save to library if uploaded new file (not from library)
+    if (!selectedResumeId && file) {
+      await saveResumeToLibrary(resumeName, resumeText);
+      showToast('Resume saved to library', 'info');
+    }
+
     // Save to history
     const entry = {
       id: Date.now().toString(),
-      filename: file.name,
+      filename: resumeName,
       date: new Date().toISOString(),
       word_count: resumeText.split(/\s+/).length,
       ai_score: results.ai_detection?.overall_score || null,
@@ -400,10 +574,11 @@ function deleteApp(i) {
 /* ─── Import/Export ────────────────────────────────────────── */
 function exportData() {
   const data = {
-    version: 1,
+    version: 2,
     exported: new Date().toISOString(),
     history: getHistory(),
     applications: getApps(),
+    resumes: getResumes(),
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -426,7 +601,8 @@ function importData() {
       if (!data.version) throw new Error('Invalid backup file');
       if (data.history) saveHistory(data.history);
       if (data.applications) saveApps(data.applications);
-      showToast(`Imported ${(data.history?.length || 0)} scans, ${(data.applications?.length || 0)} applications`, 'success');
+      if (data.resumes) saveResumes(data.resumes);
+      showToast(`Imported ${(data.history?.length || 0)} scans, ${(data.applications?.length || 0)} apps, ${(data.resumes?.length || 0)} resumes`, 'success');
       navigate(currentPage);
     } catch (err) {
       showToast('Import failed: ' + err.message, 'error');
