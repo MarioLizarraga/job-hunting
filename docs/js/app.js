@@ -263,6 +263,27 @@ async function extractPdfText(file) {
   });
 }
 
+function clearScreener() {
+  // Reset resume selection
+  selectedResumeId = null;
+  document.getElementById('resumeFile').value = '';
+  document.getElementById('resumeCard').classList.remove('has-file');
+  document.getElementById('fileName').style.display = 'none';
+  renderResumeLibrary();
+
+  // Reset JD
+  document.getElementById('jdUrl').value = '';
+  document.getElementById('jdText').value = '';
+  lastFetchedJd = null;
+  lastRawJinaText = '';
+  currentResumeText = '';
+
+  // Clear results
+  document.getElementById('results').innerHTML = '';
+
+  showToast('Screener cleared', 'info');
+}
+
 /* ─── JD URL Fetcher ───────────────────────────────────────── */
 let lastFetchedJd = null;
 let lastRawJinaText = '';
