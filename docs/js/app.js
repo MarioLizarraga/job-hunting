@@ -67,6 +67,7 @@ function navigate(page) {
   else if (page === 'screener') renderResumeLibrary();
   else if (page === 'history') renderHistory();
   else if (page === 'applications') renderApplications();
+  else if (page === 'interview') renderInterviewHome();
 }
 
 /* ─── Dashboard ────────────────────────────────────────────── */

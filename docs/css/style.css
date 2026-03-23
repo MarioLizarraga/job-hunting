@@ -125,6 +125,12 @@ h1, h2, h3, h4 { color: var(--color-heading); }
 .admin__link.active { background: var(--color-accent-glow); color: var(--color-accent); }
 .admin__link svg { width: 20px; height: 20px; flex-shrink: 0; }
 
+.admin__separator {
+  height: 1px;
+  background: var(--color-border);
+  margin: 8px 4px;
+}
+
 .admin__bottom {
   display: flex;
   align-items: center;
@@ -693,6 +699,170 @@ h1, h2, h3, h4 { color: var(--color-heading); }
 .toast__close {
   margin-left: auto;
   background: none; border: none; color: var(--color-text-muted); cursor: pointer; font-size: 1.1rem;
+}
+
+/* ─── Interview Prep ────────────────────────────────────────── */
+.interview__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.interview__header h1 { font-size: 1.4rem; }
+.interview__companies {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.company-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+.company-card:hover { border-color: var(--color-accent); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
+.company-card__logo { font-size: 2.5rem; margin-bottom: 12px; }
+.company-card__name { font-size: 1.1rem; font-weight: 700; color: var(--color-heading); margin-bottom: 4px; }
+.company-card__desc { font-size: 0.78rem; color: var(--color-text-muted); }
+
+.interview__back {
+  background: none; border: none; color: var(--color-accent); cursor: pointer;
+  font-family: inherit; font-size: 0.85rem; padding: 8px 0; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 6px;
+}
+.interview__back:hover { color: var(--color-accent-light); }
+
+.interview__tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+.interview__tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+.interview__tab:hover { color: var(--color-heading); }
+.interview__tab.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+
+.interview__content { animation: viewFadeIn 0.2s; }
+
+.timeline-step {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.timeline-step:last-child { border-bottom: none; }
+.timeline-step__num {
+  width: 36px; height: 36px;
+  background: var(--color-accent-glow);
+  color: var(--color-accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.timeline-step__info { flex: 1; }
+.timeline-step__title { font-weight: 600; color: var(--color-heading); font-size: 0.95rem; margin-bottom: 2px; }
+.timeline-step__desc { font-size: 0.82rem; color: var(--color-text-muted); }
+.timeline-step__time {
+  font-size: 0.72rem;
+  color: var(--color-accent);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.qa-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.qa-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  cursor: pointer;
+  gap: 12px;
+}
+.qa-card__header:hover { background: var(--color-bg-card-hover); }
+.qa-card__q { font-size: 0.9rem; font-weight: 600; color: var(--color-heading); flex: 1; }
+.qa-card__type {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.qa-card__type--behavioral { background: rgba(108,171,207,0.15); color: var(--color-info); }
+.qa-card__type--technical { background: rgba(107,207,142,0.15); color: var(--color-success); }
+.qa-card__type--leadership { background: rgba(201,168,108,0.15); color: var(--color-accent); }
+.qa-card__type--situational { background: rgba(224,192,96,0.15); color: var(--color-warning); }
+.qa-card__body {
+  padding: 0 18px 16px;
+  display: none;
+}
+.qa-card__body.open { display: block; }
+.qa-card__tip {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-info);
+}
+.qa-card__answer {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+  transition: var(--transition);
+}
+.qa-card__answer:focus { outline: none; border-color: var(--color-accent); }
+.qa-card__answer.has-content { border-left: 3px solid var(--color-success); }
+
+.study-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.study-item:last-child { border-bottom: none; }
+.study-item__icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.study-item__text { font-size: 0.85rem; color: var(--color-text); }
+.study-item__text strong { color: var(--color-heading); }
+
+@media (max-width: 768px) {
+  .interview__companies { grid-template-columns: 1fr; }
+  .interview__header { flex-direction: column; align-items: flex-start; }
 }
 
 /* ─── Resume Library ────────────────────────────────────────── */
