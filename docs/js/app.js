@@ -371,55 +371,105 @@ async function fetchWithFallback(url) {
 function cleanFetchedContent(raw) {
   let text = raw;
 
-  // 1. Remove JSON blobs (Microsoft injects theme config as JSON in markdown)
-  text = text.replace(/`\{[\s\S]*?\}`/g, '');          // backtick-wrapped JSON
-  text = text.replace(/\{[^{}]*"[^"]*":\s*"[^"]*"[^{}]*\}/g, ''); // inline JSON objects
-  text = text.replace(/\{"[\s\S]{50,}?\}/g, '');        // large JSON blocks
-
-  // 2. Remove code blocks
+  // 1. Remove JSON blobs, code blocks, HTML tags, CSS
+  text = text.replace(/`\{[\s\S]*?\}`/g, '');
+  text = text.replace(/\{[^{}]*"[^"]*":\s*"[^"]*"[^{}]*\}/g, '');
+  text = text.replace(/\{"[\s\S]{50,}?\}/g, '');
   text = text.replace(/```[\s\S]*?```/g, '');
-
-  // 3. Remove HTML tags that leak through
   text = text.replace(/<[^>]+>/g, '');
+  text = text.replace(/[a-z-]+\s*:\s*#[0-9a-fA-F]{3,8}\s*;?/g, '');
+  text = text.replace(/[a-z-]+\s*:\s*"[^"]*"\s*;?/g, '');
 
-  // 4. Remove CSS/style content
-  text = text.replace(/[a-z-]+\s*:\s*#[0-9a-fA-F]{3,8}\s*;?/g, '');  // color: #xxx
-  text = text.replace(/[a-z-]+\s*:\s*"[^"]*"\s*;?/g, '');             // prop: "value"
-
-  // 5. Remove image references and markdown links (keep link text)
+  // 2. Remove images, simplify markdown links/formatting
   text = text.replace(/!\[.*?\]\(.*?\)/g, '');
   text = text.replace(/\[([^\]]+)\]\(.*?\)/g, '$1');
-
-  // 6. Remove markdown formatting but keep content
   text = text.replace(/^#{1,6}\s*/gm, '');
   text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
   text = text.replace(/\*([^*]+)\*/g, '$1');
   text = text.replace(/^\s*[-*]\s+/gm, '- ');
 
-  // 7. Remove lines that are clearly not job content
+  // 3. Smart content extraction — find where the job description actually starts
+  // Look for known section anchors that signal real job content
+  const contentAnchors = [
+    /^Overview\b/im,
+    /^Description\b/im,
+    /^About (?:the|this) (?:role|position|job|opportunity)/im,
+    /^(?:The |This )(?:role|position|team|organization)/im,
+    /^Responsibilities\b/im,
+    /^Job (?:number|description|details|summary)/im,
+    /^What you['']?ll do/im,
+    /^Who we are/im,
+    /^About (?:us|the team)/im,
+  ];
+
+  let contentStart = -1;
+  for (const anchor of contentAnchors) {
+    const match = text.match(anchor);
+    if (match) {
+      const idx = text.indexOf(match[0]);
+      if (contentStart === -1 || idx < contentStart) contentStart = idx;
+    }
+  }
+
+  // If we found a content anchor, cut everything before it
+  // But keep a small lookback (200 chars) for job title/location that may precede it
+  if (contentStart > 200) {
+    // Look back from anchor to find job title (short line with role keyword before the anchor)
+    const preContent = text.substring(Math.max(0, contentStart - 500), contentStart);
+    const preLines = preContent.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+
+    // Keep lines that look like: job title, location, job metadata
+    const keptPre = preLines.filter(l =>
+      /(?:Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director)/i.test(l) ||
+      /(?:United States|Remote|Hybrid|Full.?Time|Part.?Time|Contract)/i.test(l) ||
+      /^(?:Job number|Date posted|Work site|Travel|Profession|Discipline|Role type|Employment)/i.test(l)
+    );
+
+    text = (keptPre.length > 0 ? keptPre.join('\n') + '\n\n' : '') + text.substring(contentStart);
+  }
+
+  // 4. Line-by-line noise filter (catches remaining junk)
   const lines = text.split('\n');
   const filtered = lines.filter(line => {
     const t = line.trim();
-    if (t.length === 0) return true;  // keep blank lines for spacing
+    if (t.length === 0) return true;
     if (t.length < 3) return false;
-    // Skip navigation/UI noise
-    if (/^(Skip to|Sign in|Sign up|Log in|Create account|Cookie|Privacy|Terms|Accept all|Reject|©|All rights|Follow us)/i.test(t)) return false;
-    // Skip lines that are just URLs
+    // Nav/UI noise
+    if (/^(Skip to|Sign in|Sign up|Log in|Create account|Cookie|Privacy|Terms|Accept all|Reject|©|All rights|Follow us|Cancel|View Sitemap|Search |Join talent|Add to cart|Upload your|Find out how)/i.test(t)) return false;
+    // Single-word nav items
+    if (t.length < 20 && /^(Home|Careers|Jobs|Teams|Blog|Podcasts|Programs|Locations|Professions|More|Software|Business|Entertainment|Other|Global|Cancel)$/i.test(t)) return false;
+    // Microsoft mega-menu items
+    if (/^(Microsoft 365|Azure|Copilot|Windows|Surface|Xbox|Deals|Small Business|Support|Outlook|OneDrive|Microsoft Teams|OneNote|Microsoft Edge|Computers|Shop Xbox|Accessories|VR|Certified Refurbished|Trade-in|Xbox Game|PC Game|PC games|Microsoft AI|Microsoft Security|Dynamics|Microsoft Power|Windows 365|Digital Sovereignty|Microsoft Developer|Microsoft Learn|Microsoft Tech|Microsoft Marketplace|Marketplace Rewards|Visual Studio|Microsoft Rewards|Free downloads|Education|Gift cards|Licensing|Unlocked stories|Moving from Skype)$/i.test(t)) return false;
+    // Product category headers
+    if (/^(PCs & Devices|Developer & IT|Software Software|PCs & Devices PCs|Entertainment Entertainment|Business Business|Developer & IT Developer|Other Other)$/i.test(t)) return false;
+    // URLs only
     if (/^https?:\/\/\S+$/.test(t)) return false;
-    // Skip lines that look like CSS/code
+    // CSS/code
     if (/^[a-z-]+\s*{/.test(t)) return false;
     if (/^\s*[a-z-]+\s*:\s*[#"'\d]/.test(t) && t.length < 80) return false;
-    // Skip bracket noise
+    // Bracket noise
     if (/^[\[\]{}(),;]+$/.test(t)) return false;
     return true;
   });
 
-  text = filtered.join('\n')
+  // 5. Trim the end — cut after EEO / legal boilerplate
+  let endIdx = filtered.length;
+  for (let i = filtered.length - 1; i >= 0; i--) {
+    const t = filtered[i].trim().toLowerCase();
+    if (t.includes('equal opportunity employer') || t.includes('equal employment opportunity') ||
+        t.includes('microsoft is an equal') || t.includes('all qualified applicants')) {
+      // Keep this line but cut everything after
+      endIdx = i + 1;
+      break;
+    }
+  }
+
+  text = filtered.slice(0, endIdx).join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  // 8. Cap length
-  if (text.length > 8000) text = text.substring(0, 8000) + '\n\n[Truncated...]';
+  // 6. Cap length (should be much less now with nav stripped)
+  if (text.length > 10000) text = text.substring(0, 10000) + '\n\n[Truncated...]';
 
   return text;
 }
