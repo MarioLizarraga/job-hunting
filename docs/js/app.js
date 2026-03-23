@@ -484,7 +484,7 @@ function extractJobMetadata(text, url, jinaHeaders) {
     if (meta.title.length > 70) meta.title = meta.title.substring(0, 70).trim();
   }
 
-  // ── Salary: find ALL dollar ranges, pick the one that looks like annual comp ──
+  // ── Salary: find ALL salary ranges, pick the one that looks like annual comp ──
   const salaryRangePatterns = [
     // "$173,000/year to $245,000/year" — Meta format
     /\$([\d,]+)(?:\.?\d{0,2})?(?:\/year)?\s+to\s+\$([\d,]+)(?:\.?\d{0,2})?(?:\/year)?/ig,
@@ -492,8 +492,12 @@ function extractJobMetadata(text, url, jinaHeaders) {
     /\$([\d,]+)(?:\.?\d{0,2})?\s*[-–—]\s*\$([\d,]+)(?:\.?\d{0,2})?/ig,
     // "$120K - $160K"
     /\$([\d.]+)\s*[kK]\s*[-–—to]+\s*\$?([\d.]+)\s*[kK]/ig,
-    // "XX,XXX - YY,YYY USD/year"
-    /([\d,]{5,10})\s*[-–—]\s*([\d,]{5,10})\s*(?:USD|per year|annually|\/year)/ig,
+    // "117,300.00 - 160,000.00 USD annually" — Amazon format (no $ sign!)
+    /([\d,]+\.?\d{0,2})\s*[-–—]\s*([\d,]+\.?\d{0,2})\s*(?:USD|usd)\s*(?:annually|per\s*year|\/year|\/yr)?/ig,
+    // "XX,XXX - YY,YYY per year/annually" (no $ or USD)
+    /([\d,]{5,10})(?:\.?\d{0,2})?\s*[-–—]\s*([\d,]{5,10})(?:\.?\d{0,2})?\s*(?:per\s*year|annually|\/year)/ig,
+    // "salary/compensation/pay range: XX - YY" with optional $ and qualifiers
+    /(?:salary|compensation|pay|base)\s*(?:range)?[:\s]+\$?([\d,]+)(?:\.?\d{0,2})?\s*[-–—to]+\s*\$?([\d,]+)/ig,
   ];
 
   const fmt = (n) => {
