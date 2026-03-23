@@ -235,6 +235,10 @@ async function extractPdfText(file) {
 }
 
 /* ─── JD URL Fetcher ───────────────────────────────────────── */
+
+// Store last fetched JD metadata so analyze() can use it
+let lastFetchedJd = null;
+
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   let url = urlInput.value.trim();
@@ -250,7 +254,6 @@ async function fetchJdFromUrl() {
   fetchBtn.textContent = 'Fetching...';
 
   try {
-    // Jina Reader renders JS and returns clean markdown — works with SPAs
     const jinaUrl = 'https://r.jina.ai/' + url;
     const resp = await fetch(jinaUrl, {
       signal: AbortSignal.timeout(15000),
@@ -275,10 +278,12 @@ async function fetchJdFromUrl() {
       .replace(/\n{3,}/g, '\n\n')              // collapse blank lines
       .trim();
 
-    // Cap at 8000 chars
     if (text.length > 8000) text = text.substring(0, 8000) + '\n\n[Truncated...]';
 
     document.getElementById('jdText').value = text;
+
+    // Extract metadata from the fetched text + URL
+    lastFetchedJd = extractJobMetadata(text, url);
     showToast('Job description loaded from URL', 'success');
 
   } catch (err) {
@@ -287,6 +292,141 @@ async function fetchJdFromUrl() {
     fetchBtn.disabled = false;
     fetchBtn.textContent = 'Fetch';
   }
+}
+
+/* ─── Job Metadata Extraction ──────────────────────────────── */
+function extractJobMetadata(text, url) {
+  const meta = { company: '', title: '', salary: '', url: url || '' };
+  const textLower = text.toLowerCase();
+
+  // ── Company from URL ──
+  const COMPANY_DOMAINS = {
+    'metacareers.com': 'Meta', 'meta.com': 'Meta', 'facebook.com': 'Meta',
+    'amazon.jobs': 'Amazon', 'amazon.com': 'Amazon',
+    'google.com': 'Google', 'careers.google.com': 'Google',
+    'apple.com': 'Apple', 'jobs.apple.com': 'Apple',
+    'microsoft.com': 'Microsoft', 'careers.microsoft.com': 'Microsoft',
+    'tesla.com': 'Tesla',
+    'spacex.com': 'SpaceX',
+    'nvidia.com': 'NVIDIA',
+    'intel.com': 'Intel',
+    'boeing.com': 'Boeing',
+    'lockheedmartin.com': 'Lockheed Martin',
+    'northropgrumman.com': 'Northrop Grumman',
+    'raytheon.com': 'Raytheon',
+    'honeywell.com': 'Honeywell',
+    'linkedin.com': '', // can't determine company from LinkedIn
+    'indeed.com': '',
+    'greenhouse.io': '',
+    'lever.co': '',
+    'workday.com': '',
+    'myworkdayjobs.com': '',
+  };
+
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, '');
+    // Check known domains
+    for (const [domain, company] of Object.entries(COMPANY_DOMAINS)) {
+      if (hostname.includes(domain)) {
+        if (company) meta.company = company;
+        break;
+      }
+    }
+    // Greenhouse: {company}.greenhouse.io
+    if (hostname.endsWith('.greenhouse.io')) {
+      meta.company = hostname.replace('.greenhouse.io', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    // Lever: jobs.lever.co/{company}
+    if (hostname === 'jobs.lever.co') {
+      const parts = new URL(url).pathname.split('/').filter(Boolean);
+      if (parts.length > 0) meta.company = parts[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    // Workday: {company}.wd5.myworkdayjobs.com
+    if (hostname.includes('.myworkdayjobs.com')) {
+      meta.company = hostname.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+  } catch (e) { /* invalid URL, skip */ }
+
+  // ── Company from text (if not found from URL) ──
+  if (!meta.company) {
+    const companyPatterns = [
+      /(?:company|employer|organization)\s*[:\-]\s*([^\n,]{2,40})/i,
+      /(?:about|join)\s+([\w][\w\s&.]{1,30}?)(?:\s*[\n\-|])/i,
+      /(?:at|@)\s+([\w][\w\s&.]{1,25}?)(?:\s*[,.\n])/i,
+    ];
+    for (const pat of companyPatterns) {
+      const m = text.match(pat);
+      if (m && m[1].trim().length > 1 && m[1].trim().length < 35) {
+        meta.company = m[1].trim();
+        break;
+      }
+    }
+  }
+
+  // ── Job Title ──
+  const titlePatterns = [
+    /(?:job\s*title|position|role)\s*[:\-]\s*([^\n]{3,60})/i,
+    /^([A-Z][\w\s,\/&\-()]{5,55}?(?:Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director|Coordinator|Associate|Intern|Architect)[\w\s,\/&\-()]{0,20})/m,
+  ];
+  for (const pat of titlePatterns) {
+    const m = text.match(pat);
+    if (m) {
+      meta.title = m[1].trim().replace(/\s+/g, ' ');
+      break;
+    }
+  }
+  // Fallback: first line that looks like a title (short, capitalized)
+  if (!meta.title) {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5 && l.length < 80);
+    for (const line of lines.slice(0, 10)) {
+      // Skip lines that are clearly not titles
+      if (/^(about|apply|share|save|sign|log|home|menu|cookie|privacy)/i.test(line)) continue;
+      if (/^(minimum|preferred|required|basic|what|who|why|how|the|this|our|we|you)/i.test(line)) continue;
+      // Looks like a title: mostly capitalized words, no ending punctuation
+      const words = line.split(/\s+/);
+      const capWords = words.filter(w => /^[A-Z]/.test(w)).length;
+      if (capWords >= words.length * 0.5 && !line.endsWith('.') && words.length <= 12) {
+        meta.title = line;
+        break;
+      }
+    }
+  }
+
+  // ── Salary ──
+  const salaryPatterns = [
+    // $120,000 - $160,000 or $120K-$160K
+    /\$\s*([\d,]+\.?\d*)\s*[kK]?\s*[-–—to]+\s*\$?\s*([\d,]+\.?\d*)\s*[kK]?(?:\s*(?:per\s+)?(?:year|yr|annually|annual|\/yr|\/year))?/,
+    // $120,000/year
+    /\$\s*([\d,]+\.?\d*)\s*[kK]?\s*(?:per\s+)?(?:year|yr|annually|annual|\/yr|\/year)/i,
+    // Salary: $120K - $160K or Compensation: ...
+    /(?:salary|compensation|pay|total\s+comp)[:\s]*\$\s*([\d,]+\.?\d*)\s*[kK]?\s*[-–—to]*\s*\$?\s*([\d,]+\.?\d*)?\s*[kK]?/i,
+    // Range format: 120,000 - 160,000 USD
+    /([\d,]+)\s*[-–—]\s*([\d,]+)\s*(?:USD|usd|per year|annually)/,
+  ];
+  for (const pat of salaryPatterns) {
+    const m = text.match(pat);
+    if (m) {
+      const formatNum = (n) => {
+        if (!n) return '';
+        n = n.replace(/,/g, '');
+        const num = parseFloat(n);
+        if (num < 1000) return '$' + num + 'k';  // already in K
+        return '$' + Math.round(num / 1000) + 'k';
+      };
+      if (m[2]) {
+        meta.salary = formatNum(m[1]) + ' - ' + formatNum(m[2]);
+      } else {
+        meta.salary = formatNum(m[1]);
+      }
+      break;
+    }
+  }
+
+  return meta;
+}
+
+function getLastFetchedJd() {
+  return lastFetchedJd;
 }
 
 async function analyze() {
@@ -345,6 +485,10 @@ async function analyze() {
       showToast('Resume saved to library', 'info');
     }
 
+    // Extract JD metadata (use fetched data if available, otherwise parse pasted text)
+    const jdUrl = document.getElementById('jdUrl').value.trim();
+    const jdMeta = lastFetchedJd || extractJobMetadata(jdText, jdUrl);
+
     // Save to history
     const entry = {
       id: Date.now().toString(),
@@ -354,6 +498,7 @@ async function analyze() {
       ai_score: results.ai_detection?.overall_score || null,
       ats_score: results.ats_filter?.overall_score || null,
       human_score: results.human_screener?.overall_score || null,
+      jdMeta,
       results,
     };
     const history = getHistory();
@@ -450,7 +595,7 @@ function renderHistory() {
       </div>
       <div class="history-card__info">
         <div class="history-card__title">${escapeHtml(h.filename)}</div>
-        <div class="history-card__meta">${new Date(h.date).toLocaleString()} &middot; ${h.word_count} words</div>
+        <div class="history-card__meta">${new Date(h.date).toLocaleString()} &middot; ${h.word_count} words${h.jdMeta?.company ? ' &middot; ' + escapeHtml(h.jdMeta.company) : ''}${h.jdMeta?.title ? ' &middot; ' + escapeHtml(h.jdMeta.title) : ''}</div>
       </div>
       <button class="history-card__action" onclick="event.stopPropagation();createAppFromHistory('${h.id}')" title="Create Application">+App</button>
       <button class="history-card__delete" onclick="event.stopPropagation();deleteHistory('${h.id}')" title="Delete">&times;</button>
@@ -486,24 +631,34 @@ function createAppFromHistory(historyId) {
   const entry = history.find(h => h.id === historyId);
   if (!entry) return;
 
-  // Pre-fill the app modal with scan data
+  // Use stored metadata from fetch, or empty
+  const jdMeta = entry.jdMeta || {};
+
   const modal = document.getElementById('app-modal');
   modal.style.display = 'flex';
   modal.querySelector('.modal__header h3').textContent = 'Add Application';
 
-  document.getElementById('app-company').value = '';
-  document.getElementById('app-title').value = '';
+  document.getElementById('app-company').value = jdMeta.company || '';
+  document.getElementById('app-title').value = jdMeta.title || '';
   document.getElementById('app-status').value = 'draft';
   document.getElementById('app-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('app-deadline').value = '';
-  document.getElementById('app-url').value = '';
-  document.getElementById('app-salary').value = '';
+  document.getElementById('app-url').value = jdMeta.url || '';
+  document.getElementById('app-salary').value = jdMeta.salary || '';
   document.getElementById('app-notes').value = `Resume: ${entry.filename}\nScanned: ${new Date(entry.date).toLocaleDateString()}`;
   document.getElementById('app-index').value = '';
   document.getElementById('app-scan-id').value = historyId;
 
-  // Focus company field
-  setTimeout(() => document.getElementById('app-company').focus(), 100);
+  // Focus the first empty required field
+  if (jdMeta.company) {
+    if (!jdMeta.title) setTimeout(() => document.getElementById('app-title').focus(), 100);
+  } else {
+    setTimeout(() => document.getElementById('app-company').focus(), 100);
+  }
+
+  if (jdMeta.company || jdMeta.title || jdMeta.salary) {
+    showToast('Fields auto-filled from scan data', 'info');
+  }
 }
 
 /* ─── Applications ─────────────────────────────────────────── */
