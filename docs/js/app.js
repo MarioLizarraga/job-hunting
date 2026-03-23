@@ -63,7 +63,8 @@ function navigate(page) {
   localStorage.setItem('rs_page', page);
 
   if (page === 'dashboard') renderDashboard();
-  else if (page === 'screener') { renderResumeLibrary(); }
+  else if (page === 'resumes') renderResumesPage();
+  else if (page === 'screener') renderResumeLibrary();
   else if (page === 'history') renderHistory();
   else if (page === 'applications') renderApplications();
 }
@@ -72,62 +73,108 @@ function navigate(page) {
 function renderDashboard() {
   const history = getHistory();
   const apps = getApps();
-
   const totalScans = history.length;
   const avgAI = history.length > 0 ? Math.round(history.reduce((s, h) => s + (h.ai_score || 0), 0) / history.length) : 0;
   const avgATS = history.length > 0 ? Math.round(history.reduce((s, h) => s + (h.ats_score || 0), 0) / history.length) : 0;
-  const totalApps = apps.length;
 
   document.getElementById('stat-scans').textContent = totalScans;
   document.getElementById('stat-ai').textContent = avgAI + '%';
   document.getElementById('stat-ats').textContent = avgATS + '%';
-  document.getElementById('stat-apps').textContent = totalApps;
+  document.getElementById('stat-apps').textContent = apps.length;
 
-  // Recent scans
   const recentDiv = document.getElementById('recent-scans');
-  if (history.length === 0) {
-    recentDiv.innerHTML = '<div class="empty-state" style="padding:30px"><p>No scans yet</p></div>';
-  } else {
-    recentDiv.innerHTML = history.slice(-5).reverse().map(h => `
+  recentDiv.innerHTML = history.length === 0
+    ? '<div class="empty-state" style="padding:30px"><p>No scans yet</p></div>'
+    : history.slice(-5).reverse().map(h => `
       <div class="dash-item" onclick="navigate('history')">
         <div class="dash-item__dot" style="background:${getScoreColor(h.ats_score || h.ai_score || 0)}"></div>
         <div class="dash-item__info">
-          <div class="dash-item__title">${escapeHtml(h.filename || 'Untitled')}</div>
+          <div class="dash-item__title">${escapeHtml(h.filename || 'Untitled')}${h.jdMeta?.title ? ' vs ' + escapeHtml(h.jdMeta.title) : ''}</div>
           <div class="dash-item__meta">${new Date(h.date).toLocaleDateString()} &middot; AI: ${h.ai_score || '-'}% &middot; ATS: ${h.ats_score || '-'}%</div>
         </div>
-      </div>
-    `).join('');
-  }
+      </div>`).join('');
 
-  // Recent apps
   const appsDiv = document.getElementById('recent-apps');
-  if (apps.length === 0) {
-    appsDiv.innerHTML = '<div class="empty-state" style="padding:30px"><p>No applications tracked</p></div>';
-  } else {
-    appsDiv.innerHTML = apps.slice(-5).reverse().map(a => `
+  appsDiv.innerHTML = apps.length === 0
+    ? '<div class="empty-state" style="padding:30px"><p>No applications tracked</p></div>'
+    : apps.slice(-5).reverse().map(a => `
       <div class="dash-item" onclick="navigate('applications')">
         <div class="dash-item__dot" style="background:${getStatusColor(a.status)}"></div>
         <div class="dash-item__info">
           <div class="dash-item__title">${escapeHtml(a.company)} - ${escapeHtml(a.title)}</div>
           <div class="dash-item__meta">${a.status || 'draft'} &middot; ${a.date || ''}</div>
         </div>
-      </div>
-    `).join('');
-  }
+      </div>`).join('');
 }
 
-/* ─── Resume Library ───────────────────────────────────────── */
+/* ─── Resumes Page (full library) ──────────────────────────── */
+function renderResumesPage() {
+  const resumes = getResumes();
+  const container = document.getElementById('resumes-list');
+
+  if (resumes.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#128196;</div>
+        <h3>No resumes saved</h3>
+        <p>Upload resumes here to build your library, then use them in the Screener.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = resumes.map(r => `
+    <div class="history-card">
+      <div class="history-card__scores">
+        <div class="history-card__score" style="background:var(--color-accent)">${r.wordCount}</div>
+      </div>
+      <div class="history-card__info">
+        <div class="history-card__title">${escapeHtml(r.name)}</div>
+        <div class="history-card__meta">${r.wordCount} words &middot; Added ${new Date(r.date).toLocaleDateString()}</div>
+      </div>
+      <button class="history-card__delete" onclick="deleteResume('${r.id}');renderResumesPage()" title="Delete">&times;</button>
+    </div>
+  `).join('');
+}
+
+async function uploadResumesToLibrary() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.txt,.md';
+  input.multiple = true;
+  input.onchange = async (e) => {
+    let count = 0;
+    for (const file of e.target.files) {
+      try {
+        let text;
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+          text = await extractPdfText(file);
+        } else {
+          text = await file.text();
+        }
+        if (text && text.trim().length > 30) {
+          await saveResumeToLibrary(file.name, text);
+          count++;
+        }
+      } catch (err) {
+        showToast(`Failed to read ${file.name}`, 'error');
+      }
+    }
+    if (count > 0) {
+      showToast(`${count} resume(s) added to library`, 'success');
+      renderResumesPage();
+    }
+  };
+  input.click();
+}
+
+/* ─── Resume Library (inline in screener) ──────────────────── */
 let selectedResumeId = null;
 
 function renderResumeLibrary() {
   const resumes = getResumes();
   const container = document.getElementById('resume-library');
   if (!container) return;
-
-  if (resumes.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
+  if (resumes.length === 0) { container.innerHTML = ''; return; }
 
   container.innerHTML = `
     <div class="resume-lib">
@@ -148,17 +195,13 @@ function selectResume(id) {
   const resumes = getResumes();
   const resume = resumes.find(r => r.id === id);
   if (!resume) return;
-
   selectedResumeId = selectedResumeId === id ? null : id;
-
-  // Update UI
   const card = document.getElementById('resumeCard');
   const nameEl = document.getElementById('fileName');
   if (selectedResumeId) {
     card.classList.add('has-file');
     nameEl.textContent = resume.name;
     nameEl.style.display = 'block';
-    // Clear file input since we're using saved resume
     document.getElementById('resumeFile').value = '';
   } else {
     card.classList.remove('has-file');
@@ -172,26 +215,15 @@ function deleteResume(id) {
   saveResumes(resumes);
   if (selectedResumeId === id) selectedResumeId = null;
   renderResumeLibrary();
-  showToast('Resume removed from library', 'info');
+  showToast('Resume removed', 'info');
 }
 
 async function saveResumeToLibrary(name, text) {
   const resumes = getResumes();
-  // Check for duplicate name
   const existing = resumes.findIndex(r => r.name === name);
-  const entry = {
-    id: Date.now().toString(),
-    name,
-    text,
-    wordCount: text.split(/\s+/).length,
-    date: new Date().toISOString(),
-  };
-  if (existing >= 0) {
-    entry.id = resumes[existing].id;
-    resumes[existing] = entry;
-  } else {
-    resumes.push(entry);
-  }
+  const entry = { id: Date.now().toString(), name, text, wordCount: text.split(/\s+/).length, date: new Date().toISOString() };
+  if (existing >= 0) { entry.id = resumes[existing].id; resumes[existing] = entry; }
+  else resumes.push(entry);
   saveResumes(resumes);
   renderResumeLibrary();
 }
@@ -201,7 +233,6 @@ let currentResumeText = '';
 
 function onFileSelect(input) {
   if (input.files.length > 0) {
-    // Deselect any saved resume when uploading new file
     selectedResumeId = null;
     const card = document.getElementById('resumeCard');
     const nameEl = document.getElementById('fileName');
@@ -226,28 +257,21 @@ async function extractPdfText(file) {
           text += content.items.map(item => item.str).join(' ') + '\n';
         }
         resolve(text.trim());
-      } catch (e) {
-        reject(e);
-      }
+      } catch (e) { reject(e); }
     };
     reader.readAsArrayBuffer(file);
   });
 }
 
 /* ─── JD URL Fetcher ───────────────────────────────────────── */
-
-// Store last fetched JD metadata so analyze() can use it
 let lastFetchedJd = null;
+let lastRawJinaText = '';
 
 async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   let url = urlInput.value.trim();
   if (!url) { showToast('Enter a job posting URL', 'error'); return; }
-
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url;
-    urlInput.value = url;
-  }
+  if (!url.startsWith('http://') && !url.startsWith('https://')) { url = 'https://' + url; urlInput.value = url; }
 
   const fetchBtn = document.getElementById('fetchJdBtn');
   fetchBtn.disabled = true;
@@ -255,36 +279,32 @@ async function fetchJdFromUrl() {
 
   try {
     const jinaUrl = 'https://r.jina.ai/' + url;
-    const resp = await fetch(jinaUrl, {
-      signal: AbortSignal.timeout(15000),
-      headers: { 'Accept': 'text/plain' },
-    });
-
+    const resp = await fetch(jinaUrl, { signal: AbortSignal.timeout(15000), headers: { 'Accept': 'text/plain' } });
     if (!resp.ok) throw new Error('Reader returned ' + resp.status);
-    let text = await resp.text();
+    const rawText = await resp.text();
+    if (!rawText || rawText.trim().length < 50) throw new Error('No content returned');
 
-    if (!text || text.trim().length < 50) {
-      throw new Error('No content returned');
-    }
+    lastRawJinaText = rawText;
 
-    // Clean up markdown artifacts
-    text = text
-      .replace(/!\[.*?\]\(.*?\)/g, '')         // remove images
-      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')   // links to plain text
-      .replace(/^#{1,6}\s*/gm, '')             // remove heading markers
-      .replace(/\*\*([^*]+)\*\*/g, '$1')       // bold to plain
-      .replace(/\*([^*]+)\*/g, '$1')           // italic to plain
-      .replace(/^\s*[-*]\s+/gm, '- ')          // normalize list items
-      .replace(/\n{3,}/g, '\n\n')              // collapse blank lines
+    // Parse Jina headers before cleaning
+    const jinaHeaders = parseJinaHeaders(rawText);
+
+    // Clean markdown for display
+    let cleaned = (jinaHeaders.body || rawText)
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/^\s*[-*]\s+/gm, '- ')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    if (text.length > 8000) text = text.substring(0, 8000) + '\n\n[Truncated...]';
+    if (cleaned.length > 8000) cleaned = cleaned.substring(0, 8000) + '\n\n[Truncated...]';
 
-    document.getElementById('jdText').value = text;
-
-    // Extract metadata from the fetched text + URL
-    lastFetchedJd = extractJobMetadata(text, url);
-    showToast('Job description loaded from URL', 'success');
+    document.getElementById('jdText').value = cleaned;
+    lastFetchedJd = extractJobMetadata(rawText, url, jinaHeaders);
+    showToast(`Loaded: ${lastFetchedJd.title || 'Job'} at ${lastFetchedJd.company || 'Unknown'}`, 'success', 4000);
 
   } catch (err) {
     showToast('Fetch failed: ' + err.message + '. Try pasting the JD manually.', 'error');
@@ -294,130 +314,154 @@ async function fetchJdFromUrl() {
   }
 }
 
-/* ─── Job Metadata Extraction ──────────────────────────────── */
-function extractJobMetadata(text, url) {
-  const meta = { company: '', title: '', salary: '', url: url || '' };
-  const textLower = text.toLowerCase();
+/* ─── Jina Header Parser ──────────────────────────────────── */
+function parseJinaHeaders(raw) {
+  const headers = { title: '', url: '', body: '' };
+  const lines = raw.split('\n');
 
-  // ── Company from URL ──
+  // Jina format: "Title: ...\n\nURL Source: ...\n\nMarkdown Content:\n..."
+  for (let i = 0; i < Math.min(lines.length, 15); i++) {
+    const line = lines[i];
+    if (line.startsWith('Title: ')) headers.title = line.substring(7).trim();
+    else if (line.startsWith('URL Source: ')) headers.url = line.substring(12).trim();
+    else if (line.startsWith('Markdown Content:')) {
+      headers.body = lines.slice(i + 1).join('\n');
+      break;
+    }
+  }
+
+  if (!headers.body) headers.body = raw;
+  return headers;
+}
+
+/* ─── Job Metadata Extraction (v2 — uses Jina headers) ───── */
+function extractJobMetadata(text, url, jinaHeaders) {
+  const meta = { company: '', title: '', salary: '', url: url || '' };
+  const jh = jinaHeaders || parseJinaHeaders(text);
+  const body = jh.body || text;
+
+  // ── Company from URL domain ──
   const COMPANY_DOMAINS = {
     'metacareers.com': 'Meta', 'meta.com': 'Meta', 'facebook.com': 'Meta',
     'amazon.jobs': 'Amazon', 'amazon.com': 'Amazon',
     'google.com': 'Google', 'careers.google.com': 'Google',
     'apple.com': 'Apple', 'jobs.apple.com': 'Apple',
     'microsoft.com': 'Microsoft', 'careers.microsoft.com': 'Microsoft',
-    'tesla.com': 'Tesla',
-    'spacex.com': 'SpaceX',
-    'nvidia.com': 'NVIDIA',
-    'intel.com': 'Intel',
-    'boeing.com': 'Boeing',
-    'lockheedmartin.com': 'Lockheed Martin',
-    'northropgrumman.com': 'Northrop Grumman',
-    'raytheon.com': 'Raytheon',
-    'honeywell.com': 'Honeywell',
-    'linkedin.com': '', // can't determine company from LinkedIn
-    'indeed.com': '',
-    'greenhouse.io': '',
-    'lever.co': '',
-    'workday.com': '',
-    'myworkdayjobs.com': '',
+    'tesla.com': 'Tesla', 'spacex.com': 'SpaceX',
+    'nvidia.com': 'NVIDIA', 'intel.com': 'Intel',
+    'boeing.com': 'Boeing', 'lockheedmartin.com': 'Lockheed Martin',
+    'northropgrumman.com': 'Northrop Grumman', 'raytheon.com': 'Raytheon',
+    'honeywell.com': 'Honeywell', 'netflix.com': 'Netflix',
+    'airbnb.com': 'Airbnb', 'uber.com': 'Uber', 'lyft.com': 'Lyft',
+    'salesforce.com': 'Salesforce', 'oracle.com': 'Oracle',
+    'ibm.com': 'IBM', 'cisco.com': 'Cisco', 'adobe.com': 'Adobe',
+    'linkedin.com': '', 'indeed.com': '', 'monster.com': '', 'glassdoor.com': '',
+    'greenhouse.io': '', 'lever.co': '', 'workday.com': '', 'myworkdayjobs.com': '',
   };
 
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, '');
-    // Check known domains
     for (const [domain, company] of Object.entries(COMPANY_DOMAINS)) {
-      if (hostname.includes(domain)) {
-        if (company) meta.company = company;
-        break;
-      }
+      if (hostname.includes(domain)) { if (company) meta.company = company; break; }
     }
-    // Greenhouse: {company}.greenhouse.io
-    if (hostname.endsWith('.greenhouse.io')) {
+    // Greenhouse: {company}.greenhouse.io or boards.greenhouse.io/{company}
+    if (hostname.endsWith('.greenhouse.io') && !hostname.startsWith('boards.')) {
       meta.company = hostname.replace('.greenhouse.io', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    } else if (hostname === 'boards.greenhouse.io') {
+      const seg = new URL(url).pathname.split('/').filter(Boolean)[0];
+      if (seg) meta.company = seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
     // Lever: jobs.lever.co/{company}
     if (hostname === 'jobs.lever.co') {
-      const parts = new URL(url).pathname.split('/').filter(Boolean);
-      if (parts.length > 0) meta.company = parts[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const seg = new URL(url).pathname.split('/').filter(Boolean)[0];
+      if (seg) meta.company = seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
-    // Workday: {company}.wd5.myworkdayjobs.com
+    // Workday: {company}.wd*.myworkdayjobs.com
     if (hostname.includes('.myworkdayjobs.com')) {
       meta.company = hostname.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
-  } catch (e) { /* invalid URL, skip */ }
+  } catch (e) {}
 
-  // ── Company from text (if not found from URL) ──
-  if (!meta.company) {
-    const companyPatterns = [
-      /(?:company|employer|organization)\s*[:\-]\s*([^\n,]{2,40})/i,
-      /(?:about|join)\s+([\w][\w\s&.]{1,30}?)(?:\s*[\n\-|])/i,
-      /(?:at|@)\s+([\w][\w\s&.]{1,25}?)(?:\s*[,.\n])/i,
-    ];
-    for (const pat of companyPatterns) {
-      const m = text.match(pat);
-      if (m && m[1].trim().length > 1 && m[1].trim().length < 35) {
-        meta.company = m[1].trim();
-        break;
-      }
-    }
-  }
+  // ── Title: from Jina header (best for Workday, Lever, Amazon) ──
+  const jinaTitle = jh.title || '';
+  // Generic titles to ignore — these are site names, not job titles
+  const genericTitles = ['meta careers', 'spacex', 'microsoft careers', 'careers at', 'jobs', 'indeed', 'linkedin', 'monster', 'glassdoor', 'just a moment'];
 
-  // ── Job Title ──
-  const titlePatterns = [
-    /(?:job\s*title|position|role)\s*[:\-]\s*([^\n]{3,60})/i,
-    /^([A-Z][\w\s,\/&\-()]{5,55}?(?:Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director|Coordinator|Associate|Intern|Architect)[\w\s,\/&\-()]{0,20})/m,
-  ];
-  for (const pat of titlePatterns) {
-    const m = text.match(pat);
-    if (m) {
-      meta.title = m[1].trim().replace(/\s+/g, ' ');
-      break;
-    }
-  }
-  // Fallback: first line that looks like a title (short, capitalized)
-  if (!meta.title) {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5 && l.length < 80);
-    for (const line of lines.slice(0, 10)) {
-      // Skip lines that are clearly not titles
-      if (/^(about|apply|share|save|sign|log|home|menu|cookie|privacy)/i.test(line)) continue;
-      if (/^(minimum|preferred|required|basic|what|who|why|how|the|this|our|we|you)/i.test(line)) continue;
-      // Looks like a title: mostly capitalized words, no ending punctuation
-      const words = line.split(/\s+/);
-      const capWords = words.filter(w => /^[A-Z]/.test(w)).length;
-      if (capWords >= words.length * 0.5 && !line.endsWith('.') && words.length <= 12) {
-        meta.title = line;
-        break;
-      }
-    }
-  }
-
-  // ── Salary ──
-  const salaryPatterns = [
-    // $120,000 - $160,000 or $120K-$160K
-    /\$\s*([\d,]+\.?\d*)\s*[kK]?\s*[-–—to]+\s*\$?\s*([\d,]+\.?\d*)\s*[kK]?(?:\s*(?:per\s+)?(?:year|yr|annually|annual|\/yr|\/year))?/,
-    // $120,000/year
-    /\$\s*([\d,]+\.?\d*)\s*[kK]?\s*(?:per\s+)?(?:year|yr|annually|annual|\/yr|\/year)/i,
-    // Salary: $120K - $160K or Compensation: ...
-    /(?:salary|compensation|pay|total\s+comp)[:\s]*\$\s*([\d,]+\.?\d*)\s*[kK]?\s*[-–—to]*\s*\$?\s*([\d,]+\.?\d*)?\s*[kK]?/i,
-    // Range format: 120,000 - 160,000 USD
-    /([\d,]+)\s*[-–—]\s*([\d,]+)\s*(?:USD|usd|per year|annually)/,
-  ];
-  for (const pat of salaryPatterns) {
-    const m = text.match(pat);
-    if (m) {
-      const formatNum = (n) => {
-        if (!n) return '';
-        n = n.replace(/,/g, '');
-        const num = parseFloat(n);
-        if (num < 1000) return '$' + num + 'k';  // already in K
-        return '$' + Math.round(num / 1000) + 'k';
-      };
-      if (m[2]) {
-        meta.salary = formatNum(m[1]) + ' - ' + formatNum(m[2]);
+  if (jinaTitle && !genericTitles.some(g => jinaTitle.toLowerCase().includes(g))) {
+    // Lever format: "Company - Job Title" or "Company — Job Title"
+    const leverSplit = jinaTitle.split(/\s*[-–—|]\s*/);
+    if (leverSplit.length >= 2) {
+      // If first part is a short company name, title is the rest
+      if (leverSplit[0].length < 30 && leverSplit.slice(1).join(' - ').length > 3) {
+        if (!meta.company) meta.company = leverSplit[0].trim();
+        meta.title = leverSplit.slice(1).join(' - ').trim();
       } else {
-        meta.salary = formatNum(m[1]);
+        meta.title = jinaTitle;
       }
+    } else {
+      meta.title = jinaTitle;
+    }
+  }
+
+  // ── Title: from first markdown heading (# Title) — best for Meta ──
+  if (!meta.title || meta.title.length > 80) {
+    const headingMatch = body.match(/^#\s+(.{5,80})$/m);
+    if (headingMatch) {
+      const h = headingMatch[1].trim();
+      // Skip nav headings
+      if (!/^(about|menu|footer|nav|sign|log|cookie|home|teams|career|working)/i.test(h)) {
+        meta.title = h;
+      }
+    }
+  }
+
+  // ── Title: role-keyword pattern in text ──
+  if (!meta.title) {
+    const roleWords = 'Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director|Coordinator|Associate|Intern|Architect|Researcher|Operator|Administrator|Consultant';
+    const roleRegex = new RegExp(`^(.{3,70}(?:${roleWords}).{0,20})$`, 'm');
+    const m = body.match(roleRegex);
+    if (m) {
+      const candidate = m[1].trim();
+      if (candidate.length < 80 && !/^(about|apply|share|working|join|meet|explore)/i.test(candidate)) {
+        meta.title = candidate;
+      }
+    }
+  }
+
+  // Clean up title
+  if (meta.title) {
+    meta.title = meta.title.replace(/\s+/g, ' ').replace(/\|.*$/, '').trim();
+    if (meta.title.length > 70) meta.title = meta.title.substring(0, 70).trim();
+  }
+
+  // ── Salary: find the RANGE pattern (prioritize X to Y or X - Y) ──
+  const salaryPatterns = [
+    // "$173,000/year to $245,000/year" — Meta format
+    /\$([\d,]+)(?:\.00)?\/year\s+to\s+\$([\d,]+)(?:\.00)?\/year/i,
+    // "$120,000 - $160,000" with optional /year
+    /\$([\d,]+)(?:\.?\d{0,2})?\s*[-–—]\s*\$([\d,]+)(?:\.?\d{0,2})?(?:\s*(?:per\s+)?(?:year|yr|annually|annual|\/yr|\/year|USD))?/i,
+    // "$120K - $160K"
+    /\$([\d.]+)\s*[kK]\s*[-–—to]+\s*\$?([\d.]+)\s*[kK]/,
+    // "Salary: $X - $Y" or "Compensation: $X to $Y"
+    /(?:salary|compensation|pay|base|total\s*comp)[:\s]+\$([\d,]+)(?:\.?\d*)?\s*[-–—to]+\s*\$?([\d,]+)/i,
+    // "XX,XXX - YY,YYY USD" or "per year"
+    /([\d,]{5,10})\s*[-–—]\s*([\d,]{5,10})\s*(?:USD|usd|per year|annually|\/year)/,
+    // Single salary: "$173,000/year"
+    /\$([\d,]+)(?:\.00)?(?:\s*\/|\s+per\s+)(?:year|yr|annum)/i,
+  ];
+
+  for (const pat of salaryPatterns) {
+    const m = body.match(pat);
+    if (m) {
+      const fmt = (n) => {
+        if (!n) return '';
+        const num = parseFloat(n.replace(/,/g, ''));
+        if (num >= 1000) return '$' + Math.round(num / 1000) + 'k';
+        if (num > 0) return '$' + num + 'k';
+        return '';
+      };
+      if (m[2]) meta.salary = fmt(m[1]) + ' - ' + fmt(m[2]);
+      else meta.salary = fmt(m[1]);
       break;
     }
   }
@@ -425,38 +469,22 @@ function extractJobMetadata(text, url) {
   return meta;
 }
 
-function getLastFetchedJd() {
-  return lastFetchedJd;
-}
-
+/* ─── Analyze ──────────────────────────────────────────────── */
 async function analyze() {
   const fileInput = document.getElementById('resumeFile');
   const jdText = document.getElementById('jdText').value;
   const file = fileInput.files[0];
 
-  // Get resume text from saved library or uploaded file
-  let resumeText = '';
-  let resumeName = '';
-
+  let resumeText = '', resumeName = '';
   if (selectedResumeId) {
     const resume = getResumes().find(r => r.id === selectedResumeId);
-    if (resume) {
-      resumeText = resume.text;
-      resumeName = resume.name;
-    }
+    if (resume) { resumeText = resume.text; resumeName = resume.name; }
   } else if (file) {
-    if (file.name.toLowerCase().endsWith('.pdf')) {
-      resumeText = await extractPdfText(file);
-    } else {
-      resumeText = await file.text();
-    }
+    resumeText = file.name.toLowerCase().endsWith('.pdf') ? await extractPdfText(file) : await file.text();
     resumeName = file.name;
   }
 
-  if (!resumeText || resumeText.trim().length < 50) {
-    showToast('Select a saved resume or upload a file', 'error');
-    return;
-  }
+  if (!resumeText || resumeText.trim().length < 50) { showToast('Select a saved resume or upload a file', 'error'); return; }
   if (!jdText.trim()) { showToast('Please paste a job description or fetch from URL', 'error'); return; }
 
   const checks = [];
@@ -472,24 +500,16 @@ async function analyze() {
   try {
     currentResumeText = resumeText;
     const results = {};
-
     if (checks.includes('ai')) results.ai_detection = runAiDetection(resumeText);
     if (checks.includes('ats')) results.ats_filter = runAtsFilter(resumeText, jdText);
     if (checks.includes('human')) results.human_screener = runHumanScreener(resumeText, jdText);
-
     renderResults(results);
 
-    // Offer to save to library if uploaded new file (not from library)
-    if (!selectedResumeId && file) {
-      await saveResumeToLibrary(resumeName, resumeText);
-      showToast('Resume saved to library', 'info');
-    }
+    if (!selectedResumeId && file) { await saveResumeToLibrary(resumeName, resumeText); }
 
-    // Extract JD metadata (use fetched data if available, otherwise parse pasted text)
     const jdUrl = document.getElementById('jdUrl').value.trim();
     const jdMeta = lastFetchedJd || extractJobMetadata(jdText, jdUrl);
 
-    // Save to history
     const entry = {
       id: Date.now().toString(),
       filename: resumeName,
@@ -504,6 +524,7 @@ async function analyze() {
     const history = getHistory();
     history.push(entry);
     saveHistory(history);
+    lastFetchedJd = null; // Reset for next scan
     showToast('Analysis saved to history', 'success');
 
   } catch (err) {
@@ -529,46 +550,23 @@ function renderSection(title, subtitle, result) {
   for (const [key, check] of Object.entries(result.checks)) {
     const scoreClass = check.score >= 75 ? 'high' : check.score >= 50 ? 'mid' : 'low';
     let extraHtml = '';
-
     if (check.match_data) {
       extraHtml += '<div class="keyword-tags">';
       if (check.match_data.required_matched) check.match_data.required_matched.forEach(k => extraHtml += `<span class="tag matched">${escapeHtml(k)}</span>`);
       if (check.match_data.required_missing) check.match_data.required_missing.forEach(k => extraHtml += `<span class="tag missing">${escapeHtml(k)}</span>`);
       extraHtml += '</div>';
     }
-    if (check.flags && check.flags.length > 0) {
-      extraHtml += '<ul class="flags-list">' + check.flags.map(f => `<li>${escapeHtml(f)}</li>`).join('') + '</ul>';
-    }
+    if (check.flags?.length) extraHtml += '<ul class="flags-list">' + check.flags.map(f => `<li>${escapeHtml(f)}</li>`).join('') + '</ul>';
     if (check.examples) {
       extraHtml += '<div class="examples">';
       if (check.examples.great_examples?.length) extraHtml += '<p class="good">Strong: "' + escapeHtml(check.examples.great_examples[0]) + '"</p>';
       if (check.examples.weak_examples?.length) extraHtml += '<p class="bad">Weak: "' + escapeHtml(check.examples.weak_examples[0]) + '"</p>';
       extraHtml += '</div>';
     }
-
-    checksHtml += `
-      <div class="check-row">
-        <div class="check-name">${escapeHtml(check.name)}</div>
-        <div class="check-score ${scoreClass}">${check.score}%</div>
-        <div>
-          <div class="check-detail">${escapeHtml(check.detail)}</div>
-          ${extraHtml}
-        </div>
-      </div>`;
+    checksHtml += `<div class="check-row"><div class="check-name">${escapeHtml(check.name)}</div><div class="check-score ${scoreClass}">${check.score}%</div><div><div class="check-detail">${escapeHtml(check.detail)}</div>${extraHtml}</div></div>`;
   }
-
   const badgeClass = result.overall_score >= 75 ? 'pass' : result.overall_score >= 50 ? 'warning' : 'fail';
-  return `
-    <div class="result-section">
-      <div class="result-header" onclick="this.parentElement.querySelector('.result-body').classList.toggle('collapsed')">
-        <h2>
-          <span class="score-badge ${badgeClass}">${result.overall_score}%</span>
-          <span>${title}<br><small>${subtitle}</small></span>
-        </h2>
-      </div>
-      <div class="verdict ${result.verdict_class}">${escapeHtml(result.verdict)}</div>
-      <div class="result-body">${checksHtml}</div>
-    </div>`;
+  return `<div class="result-section"><div class="result-header" onclick="this.parentElement.querySelector('.result-body').classList.toggle('collapsed')"><h2><span class="score-badge ${badgeClass}">${result.overall_score}%</span><span>${title}<br><small>${subtitle}</small></span></h2></div><div class="verdict ${result.verdict_class}">${escapeHtml(result.verdict)}</div><div class="result-body">${checksHtml}</div></div>`;
 }
 
 /* ─── History ──────────────────────────────────────────────── */
@@ -577,16 +575,16 @@ function renderHistory() {
   const container = document.getElementById('history-list');
 
   if (history.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state__icon">&#128203;</div>
-        <h3>No scan history</h3>
-        <p>Run your first resume analysis to see results here.</p>
-      </div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state__icon">&#128203;</div><h3>No scan history</h3><p>Run your first resume analysis to see results here.</p></div>`;
     return;
   }
 
-  container.innerHTML = history.slice().reverse().map(h => `
+  container.innerHTML = history.slice().reverse().map(h => {
+    const jobLabel = h.jdMeta?.title
+      ? `vs <strong>${escapeHtml(h.jdMeta.title)}</strong>${h.jdMeta.company ? ' at ' + escapeHtml(h.jdMeta.company) : ''}`
+      : '<span class="history-card__add-job" onclick="event.stopPropagation();editHistoryJob(\''+h.id+'\')">+ add job info</span>';
+
+    return `
     <div class="history-card" onclick="viewHistoryEntry('${h.id}')">
       <div class="history-card__scores">
         ${h.ai_score != null ? `<div class="history-card__score" style="background:${getScoreColor(h.ai_score)}" title="AI">${h.ai_score}%</div>` : ''}
@@ -595,25 +593,41 @@ function renderHistory() {
       </div>
       <div class="history-card__info">
         <div class="history-card__title">${escapeHtml(h.filename)}</div>
-        <div class="history-card__meta">${new Date(h.date).toLocaleString()} &middot; ${h.word_count} words${h.jdMeta?.company ? ' &middot; ' + escapeHtml(h.jdMeta.company) : ''}${h.jdMeta?.title ? ' &middot; ' + escapeHtml(h.jdMeta.title) : ''}</div>
+        <div class="history-card__meta">${new Date(h.date).toLocaleString()} &middot; ${jobLabel}</div>
       </div>
       <button class="history-card__action" onclick="event.stopPropagation();createAppFromHistory('${h.id}')" title="Create Application">+App</button>
       <button class="history-card__delete" onclick="event.stopPropagation();deleteHistory('${h.id}')" title="Delete">&times;</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function editHistoryJob(id) {
+  const history = getHistory();
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
+  const jm = entry.jdMeta || {};
+
+  const company = prompt('Company:', jm.company || '');
+  if (company === null) return;
+  const title = prompt('Job Title:', jm.title || '');
+  if (title === null) return;
+  const url = prompt('Job URL:', jm.url || '');
+
+  entry.jdMeta = { ...jm, company: company.trim(), title: title.trim(), url: (url || '').trim() };
+  saveHistory(history);
+  renderHistory();
+  showToast('Job info updated', 'success');
 }
 
 function viewHistoryEntry(id) {
-  const history = getHistory();
-  const entry = history.find(h => h.id === id);
-  if (!entry || !entry.results) return;
+  const entry = getHistory().find(h => h.id === id);
+  if (!entry?.results) return;
   navigate('screener');
   setTimeout(() => renderResults(entry.results), 100);
 }
 
 function deleteHistory(id) {
-  const history = getHistory().filter(h => h.id !== id);
-  saveHistory(history);
+  saveHistory(getHistory().filter(h => h.id !== id));
   renderHistory();
   showToast('Entry deleted', 'info');
 }
@@ -625,40 +639,33 @@ function clearHistory() {
   showToast('History cleared', 'info');
 }
 
-/* ─── History → Application ─────────────────────────────────── */
+/* ─── History → Application ────────────────────────────────── */
 function createAppFromHistory(historyId) {
-  const history = getHistory();
-  const entry = history.find(h => h.id === historyId);
+  const entry = getHistory().find(h => h.id === historyId);
   if (!entry) return;
-
-  // Use stored metadata from fetch, or empty
-  const jdMeta = entry.jdMeta || {};
+  const jm = entry.jdMeta || {};
 
   const modal = document.getElementById('app-modal');
   modal.style.display = 'flex';
   modal.querySelector('.modal__header h3').textContent = 'Add Application';
 
-  document.getElementById('app-company').value = jdMeta.company || '';
-  document.getElementById('app-title').value = jdMeta.title || '';
+  document.getElementById('app-company').value = jm.company || '';
+  document.getElementById('app-title').value = jm.title || '';
   document.getElementById('app-status').value = 'draft';
   document.getElementById('app-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('app-deadline').value = '';
-  document.getElementById('app-url').value = jdMeta.url || '';
-  document.getElementById('app-salary').value = jdMeta.salary || '';
-  document.getElementById('app-notes').value = `Resume: ${entry.filename}\nScanned: ${new Date(entry.date).toLocaleDateString()}`;
+  document.getElementById('app-url').value = jm.url || '';
+  document.getElementById('app-salary').value = jm.salary || '';
+  document.getElementById('app-resume').value = entry.filename || '';
+  document.getElementById('app-notes').value = '';
   document.getElementById('app-index').value = '';
   document.getElementById('app-scan-id').value = historyId;
 
-  // Focus the first empty required field
-  if (jdMeta.company) {
-    if (!jdMeta.title) setTimeout(() => document.getElementById('app-title').focus(), 100);
+  if (jm.company) {
+    if (!jm.title) setTimeout(() => document.getElementById('app-title').focus(), 100);
   } else {
     setTimeout(() => document.getElementById('app-company').focus(), 100);
   }
-
-  if (jdMeta.company || jdMeta.title || jdMeta.salary) {
-    showToast('Fields auto-filled from scan data', 'info');
-  }
+  if (jm.company || jm.title || jm.salary) showToast('Fields auto-filled from scan data', 'info');
 }
 
 /* ─── Applications ─────────────────────────────────────────── */
@@ -674,25 +681,19 @@ function renderApplications() {
   tbody.innerHTML = apps.map((a, i) => {
     const scores = a.scanScores;
     const scoreHtml = scores
-      ? `<div style="display:flex;gap:4px">
-          ${scores.ai != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ai)}">${scores.ai}</span>` : ''}
-          ${scores.ats != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ats)}">${scores.ats}</span>` : ''}
-          ${scores.human != null ? `<span class="mini-score" style="background:${getScoreColor(scores.human)}">${scores.human}</span>` : ''}
-         </div>`
+      ? `<div style="display:flex;gap:4px">${scores.ai != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ai)}" title="AI">${scores.ai}</span>` : ''}${scores.ats != null ? `<span class="mini-score" style="background:${getScoreColor(scores.ats)}" title="ATS">${scores.ats}</span>` : ''}${scores.human != null ? `<span class="mini-score" style="background:${getScoreColor(scores.human)}" title="Human">${scores.human}</span>` : ''}</div>`
       : '<span style="color:var(--color-text-muted)">-</span>';
 
-    const linkHtml = a.url
-      ? `<a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" class="app-link" onclick="event.stopPropagation()" title="${escapeHtml(a.url)}">Open</a>`
-      : '';
+    const linkHtml = a.url ? `<a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" class="app-link" onclick="event.stopPropagation()" title="${escapeHtml(a.url)}">Open</a>` : '';
 
-    return `
-    <tr>
+    return `<tr>
       <td style="font-weight:600;color:var(--color-heading)">${escapeHtml(a.company)}</td>
       <td>${escapeHtml(a.title)}</td>
       <td><span class="status-badge status-badge--${a.status || 'draft'}">${a.status || 'draft'}</span></td>
       <td>${scoreHtml}</td>
+      <td>${escapeHtml(a.resume || '')}</td>
       <td>${a.salary || ''}</td>
-      <td>${a.deadline || ''}</td>
+      <td>${a.date || ''}</td>
       <td>${linkHtml}</td>
       <td>
         <button class="btn--icon" onclick="editApp(${i})" title="Edit">&#9998;</button>
@@ -704,20 +705,18 @@ function renderApplications() {
 
 function showAppModal(index) {
   const apps = getApps();
-  const app = index != null ? apps[index] : { company: '', title: '', status: 'draft', date: '', deadline: '', notes: '', url: '', salary: '', scanId: '' };
-  const isEdit = index != null;
-
+  const app = index != null ? apps[index] : {};
   const modal = document.getElementById('app-modal');
   modal.style.display = 'flex';
-  modal.querySelector('.modal__header h3').textContent = isEdit ? 'Edit Application' : 'Add Application';
+  modal.querySelector('.modal__header h3').textContent = index != null ? 'Edit Application' : 'Add Application';
 
   document.getElementById('app-company').value = app.company || '';
   document.getElementById('app-title').value = app.title || '';
   document.getElementById('app-status').value = app.status || 'draft';
   document.getElementById('app-date').value = app.date || '';
-  document.getElementById('app-deadline').value = app.deadline || '';
   document.getElementById('app-url').value = app.url || '';
   document.getElementById('app-salary').value = app.salary || '';
+  document.getElementById('app-resume').value = app.resume || '';
   document.getElementById('app-notes').value = app.notes || '';
   document.getElementById('app-index').value = index != null ? index : '';
   document.getElementById('app-scan-id').value = app.scanId || '';
@@ -732,25 +731,17 @@ function saveApp() {
     title: document.getElementById('app-title').value,
     status: document.getElementById('app-status').value,
     date: document.getElementById('app-date').value,
-    deadline: document.getElementById('app-deadline').value,
     url: document.getElementById('app-url').value,
     salary: document.getElementById('app-salary').value,
+    resume: document.getElementById('app-resume').value,
     notes: document.getElementById('app-notes').value,
     scanId: scanId || '',
   };
 
-  // Attach scan scores if linked to a history entry
   if (scanId) {
     const entry = getHistory().find(h => h.id === scanId);
-    if (entry) {
-      app.scanScores = {
-        ai: entry.ai_score,
-        ats: entry.ats_score,
-        human: entry.human_score,
-      };
-    }
+    if (entry) app.scanScores = { ai: entry.ai_score, ats: entry.ats_score, human: entry.human_score };
   }
-  // Preserve existing scores on edit if no new scanId
   if (index !== '' && !scanId) {
     const existing = getApps()[parseInt(index)];
     if (existing?.scanScores) app.scanScores = existing.scanScores;
@@ -780,40 +771,27 @@ function deleteApp(i) {
 
 /* ─── Import/Export ────────────────────────────────────────── */
 function exportData() {
-  const data = {
-    version: 2,
-    exported: new Date().toISOString(),
-    history: getHistory(),
-    applications: getApps(),
-    resumes: getResumes(),
-  };
+  const data = { version: 3, exported: new Date().toISOString(), history: getHistory(), applications: getApps(), resumes: getResumes() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const a = document.createElement('a'); a.href = url;
   a.download = `resume-screener-backup-${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.click(); URL.revokeObjectURL(url);
   showToast('Data exported', 'success');
 }
 
 function importData() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
+  const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
   input.onchange = async (e) => {
     try {
       const text = await e.target.files[0].text();
       const data = JSON.parse(text);
-      if (!data.version) throw new Error('Invalid backup file');
       if (data.history) saveHistory(data.history);
       if (data.applications) saveApps(data.applications);
       if (data.resumes) saveResumes(data.resumes);
-      showToast(`Imported ${(data.history?.length || 0)} scans, ${(data.applications?.length || 0)} apps, ${(data.resumes?.length || 0)} resumes`, 'success');
+      showToast(`Imported ${(data.history?.length||0)} scans, ${(data.applications?.length||0)} apps, ${(data.resumes?.length||0)} resumes`, 'success');
       navigate(currentPage);
-    } catch (err) {
-      showToast('Import failed: ' + err.message, 'error');
-    }
+    } catch (err) { showToast('Import failed: ' + err.message, 'error'); }
   };
   input.click();
 }
@@ -824,17 +802,11 @@ function getScoreColor(score) {
   if (score >= 50) return 'var(--color-warning)';
   return 'var(--color-error)';
 }
-
 function getStatusColor(status) {
-  const colors = { draft: 'var(--color-info)', submitted: 'var(--color-accent)', interview: 'var(--color-success)', rejected: 'var(--color-error)', offer: 'var(--color-success)' };
-  return colors[status] || 'var(--color-text-muted)';
+  const c = { draft: 'var(--color-info)', submitted: 'var(--color-accent)', interview: 'var(--color-success)', rejected: 'var(--color-error)', offer: 'var(--color-success)' };
+  return c[status] || 'var(--color-text-muted)';
 }
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
+function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 /* ─── Init ─────────────────────────────────────────────────── */

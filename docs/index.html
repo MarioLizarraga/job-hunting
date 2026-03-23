@@ -23,6 +23,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           <span>Dashboard</span>
         </button>
+        <button class="admin__link" data-page="resumes" onclick="navigate('resumes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Resumes</span>
+        </button>
         <button class="admin__link" data-page="screener" onclick="navigate('screener')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           <span>Screener</span>
@@ -91,6 +95,18 @@
             <div class="dash-card__body" id="recent-apps"></div>
           </div>
         </div>
+      </div>
+
+      <!-- Resumes View -->
+      <div id="view-resumes" class="view">
+        <div class="history__header">
+          <h1>Resume Library</h1>
+          <div class="history__actions">
+            <button class="btn btn--primary btn--sm" onclick="uploadResumesToLibrary()">+ Upload Resumes</button>
+          </div>
+        </div>
+        <p style="color:var(--color-text-muted);font-size:0.85rem;margin-bottom:20px">Upload multiple resumes at once (PDF or text). Select any saved resume in the Screener.</p>
+        <div id="resumes-list"></div>
       </div>
 
       <!-- Screener View -->
@@ -163,8 +179,9 @@
               <th>Position</th>
               <th>Status</th>
               <th>Scores</th>
+              <th>Resume</th>
               <th>Salary</th>
-              <th>Deadline</th>
+              <th>Submitted</th>
               <th>Link</th>
               <th>Actions</th>
             </tr>
@@ -208,18 +225,18 @@
             </select>
           </div>
           <div class="form__group">
-            <label>Applied Date</label>
+            <label>Date Submitted</label>
             <input type="date" id="app-date">
           </div>
         </div>
         <div class="form__row">
           <div class="form__group">
-            <label>Deadline</label>
-            <input type="date" id="app-deadline">
+            <label>Resume Used</label>
+            <input type="text" id="app-resume" placeholder="e.g. Resume_V2_FSE.pdf">
           </div>
           <div class="form__group">
             <label>Salary Range</label>
-            <input type="text" id="app-salary" placeholder="e.g. $120k-$160k">
+            <input type="text" id="app-salary" placeholder="e.g. $120k - $160k">
           </div>
         </div>
         <div class="form__group">
