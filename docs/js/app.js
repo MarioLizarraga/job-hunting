@@ -288,6 +288,37 @@ function clearScreener() {
 let lastFetchedJd = null;
 let lastRawJinaText = '';
 
+function normalizeJobUrl(url) {
+  try {
+    const u = new URL(url);
+
+    // LinkedIn: extract job ID from any URL variant and use /jobs/view/{id}
+    if (u.hostname.includes('linkedin.com')) {
+      // /jobs/collections/recommended/?currentJobId=123 → /jobs/view/123
+      const currentJobId = u.searchParams.get('currentJobId');
+      if (currentJobId) return `https://www.linkedin.com/jobs/view/${currentJobId}`;
+      // /jobs/search/?currentJobId=123
+      // /jobs/collections/...?currentJobId=123
+      // Already /jobs/view/123 — extract just the ID to normalize
+      const viewMatch = u.pathname.match(/\/jobs\/view\/(\d+)/);
+      if (viewMatch) return `https://www.linkedin.com/jobs/view/${viewMatch[1]}`;
+    }
+
+    // Meta: /profile/job_details/123 → /jobs/123 (public URL)
+    if (u.hostname.includes('metacareers.com')) {
+      const detailMatch = u.pathname.match(/\/profile\/job_details\/(\d+)/);
+      if (detailMatch) return `https://www.metacareers.com/jobs/${detailMatch[1]}`;
+    }
+
+    // Indeed: ensure clean URL without tracking params
+    if (u.hostname.includes('indeed.com')) {
+      const jk = u.searchParams.get('jk');
+      if (jk) return `https://www.indeed.com/viewjob?jk=${jk}`;
+    }
+  } catch (e) {}
+  return url;
+}
+
 async function fetchWithFallback(url) {
   const methods = [
     { name: 'Jina Reader', fetch: () => fetch('https://r.jina.ai/' + url, { signal: AbortSignal.timeout(30000), headers: { 'Accept': 'text/plain' } }) },
@@ -315,7 +346,11 @@ async function fetchJdFromUrl() {
   const urlInput = document.getElementById('jdUrl');
   let url = urlInput.value.trim();
   if (!url) { showToast('Enter a job posting URL', 'error'); return; }
-  if (!url.startsWith('http://') && !url.startsWith('https://')) { url = 'https://' + url; urlInput.value = url; }
+  if (!url.startsWith('http://') && !url.startsWith('https://')) { url = 'https://' + url; }
+
+  // Normalize URL (LinkedIn collections → /jobs/view/, Meta profile → /jobs/, etc.)
+  url = normalizeJobUrl(url);
+  urlInput.value = url;
 
   const fetchBtn = document.getElementById('fetchJdBtn');
   fetchBtn.disabled = true;
