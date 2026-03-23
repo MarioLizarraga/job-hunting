@@ -382,55 +382,63 @@ function extractJobMetadata(text, url, jinaHeaders) {
     }
   } catch (e) {}
 
-  // ── Title: from Jina header (best for Workday, Lever, Amazon) ──
-  const jinaTitle = jh.title || '';
-  // Generic titles to ignore — these are site names, not job titles
-  const genericTitles = ['meta careers', 'spacex', 'microsoft careers', 'careers at', 'jobs', 'indeed', 'linkedin', 'monster', 'glassdoor', 'just a moment'];
+  // ── Title extraction (ordered by reliability) ──
 
-  if (jinaTitle && !genericTitles.some(g => jinaTitle.toLowerCase().includes(g))) {
-    // Lever format: "Company - Job Title" or "Company — Job Title"
-    const leverSplit = jinaTitle.split(/\s*[-–—|]\s*/);
-    if (leverSplit.length >= 2) {
-      // If first part is a short company name, title is the rest
-      if (leverSplit[0].length < 30 && leverSplit.slice(1).join(' - ').length > 3) {
+  // Words/phrases that indicate a site name, not a job title
+  const GENERIC_TITLE = /^(meta\s*careers?|spacex|microsoft\s*careers?|careers?\s*(at|stage)|jobs?|indeed|linkedin|monster|glassdoor|just\s*a\s*moment|google\s*careers?|apple|amazon|netflix|airbnb|uber|welcome|home|sign\s*in)/i;
+
+  // Role keywords that confirm something is a real job title
+  const ROLE_KEYWORDS = /(?:Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director|Coordinator|Associate|Intern|Architect|Researcher|Operator|Administrator|Consultant|Strategist|Producer|Officer|VP|Head\s+of)/i;
+
+  // Strategy 1: Find role-keyword lines in the markdown body (most reliable)
+  // These are lines that contain a known job-role word and look like titles
+  const bodyLines = body.split('\n').map(l => l.replace(/^#+\s*/, '').trim()).filter(l => l.length > 3 && l.length < 80);
+  for (const line of bodyLines) {
+    if (ROLE_KEYWORDS.test(line) && !GENERIC_TITLE.test(line)) {
+      // Skip lines that are clearly nav/UI noise
+      if (/^(skip|menu|footer|cookie|privacy|sign|log|apply|share|save|blog|podcast|team|working|career\s+program)/i.test(line)) continue;
+      // Skip lines with too many words (likely a sentence, not a title)
+      if (line.split(/\s+/).length > 12) continue;
+      meta.title = line;
+      break;
+    }
+  }
+
+  // Strategy 2: Jina Title: header (works for Workday, Lever, Amazon)
+  if (!meta.title) {
+    const jinaTitle = (jh.title || '').trim();
+    if (jinaTitle && !GENERIC_TITLE.test(jinaTitle)) {
+      // Lever format: "Company - Job Title" or "Company — Job Title"
+      const leverSplit = jinaTitle.split(/\s*[-–—|]\s*/);
+      if (leverSplit.length >= 2 && leverSplit[0].length < 30) {
         if (!meta.company) meta.company = leverSplit[0].trim();
         meta.title = leverSplit.slice(1).join(' - ').trim();
       } else {
         meta.title = jinaTitle;
       }
-    } else {
-      meta.title = jinaTitle;
     }
   }
 
-  // ── Title: from first markdown heading (# Title) — best for Meta ──
-  if (!meta.title || meta.title.length > 80) {
-    const headingMatch = body.match(/^#\s+(.{5,80})$/m);
-    if (headingMatch) {
-      const h = headingMatch[1].trim();
-      // Skip nav headings
-      if (!/^(about|menu|footer|nav|sign|log|cookie|home|teams|career|working)/i.test(h)) {
-        meta.title = h;
-      }
-    }
-  }
-
-  // ── Title: role-keyword pattern in text ──
+  // Strategy 3: First markdown heading that contains a role keyword
   if (!meta.title) {
-    const roleWords = 'Engineer|Developer|Designer|Manager|Analyst|Scientist|Specialist|Technician|Lead|Director|Coordinator|Associate|Intern|Architect|Researcher|Operator|Administrator|Consultant';
-    const roleRegex = new RegExp(`^(.{3,70}(?:${roleWords}).{0,20})$`, 'm');
-    const m = body.match(roleRegex);
-    if (m) {
-      const candidate = m[1].trim();
-      if (candidate.length < 80 && !/^(about|apply|share|working|join|meet|explore)/i.test(candidate)) {
-        meta.title = candidate;
+    const headings = body.match(/^#+\s+(.{5,80})$/gm) || [];
+    for (const h of headings) {
+      const cleaned = h.replace(/^#+\s*/, '').trim();
+      if (ROLE_KEYWORDS.test(cleaned) && !GENERIC_TITLE.test(cleaned)) {
+        meta.title = cleaned;
+        break;
       }
     }
   }
 
   // Clean up title
   if (meta.title) {
-    meta.title = meta.title.replace(/\s+/g, ' ').replace(/\|.*$/, '').trim();
+    meta.title = meta.title
+      .replace(/\s+/g, ' ')
+      .replace(/\|.*$/, '')
+      .replace(/\[.*?\]\(.*?\)/g, '')  // remove markdown links
+      .replace(/[*_#]/g, '')           // remove markdown formatting
+      .trim();
     if (meta.title.length > 70) meta.title = meta.title.substring(0, 70).trim();
   }
 
