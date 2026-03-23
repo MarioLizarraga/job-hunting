@@ -60,6 +60,7 @@ function navigate(page) {
   const link = document.querySelector(`.admin__link[data-page="${page}"]`);
   if (link) link.classList.add('active');
   currentPage = page;
+  localStorage.setItem('rs_page', page);
 
   if (page === 'dashboard') renderDashboard();
   else if (page === 'screener') { renderResumeLibrary(); }
@@ -686,5 +687,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon(saved);
-  navigate('dashboard');
+  navigate(localStorage.getItem('rs_page') || 'dashboard');
 });
