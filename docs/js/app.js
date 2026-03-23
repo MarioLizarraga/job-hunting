@@ -310,11 +310,37 @@ function normalizeJobUrl(url) {
       if (detailMatch) return `https://www.metacareers.com/jobs/${detailMatch[1]}`;
     }
 
+    // Microsoft: extract job ID from search/tracking URLs → clean /careers/job/{id}
+    if (u.hostname.includes('careers.microsoft.com')) {
+      // Search page with pid= param: /careers?pid=123&... → /careers/job/123
+      const pid = u.searchParams.get('pid');
+      if (pid) return `https://apply.careers.microsoft.com/careers/job/${pid}?domain=microsoft.com`;
+      // Already a job URL — strip tracking params
+      const jobMatch = u.pathname.match(/\/careers\/job\/(\d+)/);
+      if (jobMatch) return `https://apply.careers.microsoft.com/careers/job/${jobMatch[1]}?domain=microsoft.com`;
+    }
+
     // Indeed: ensure clean URL without tracking params
     if (u.hostname.includes('indeed.com')) {
       const jk = u.searchParams.get('jk');
       if (jk) return `https://www.indeed.com/viewjob?jk=${jk}`;
     }
+
+    // Amazon: strip tracking params, keep clean job URL
+    if (u.hostname.includes('amazon.jobs')) {
+      const jobMatch = u.pathname.match(/(\/en\/jobs\/\d+\/[^?]*)/);
+      if (jobMatch) return `https://www.amazon.jobs${jobMatch[1]}`;
+    }
+
+    // Greenhouse: normalize board URLs
+    if (u.hostname.includes('greenhouse.io')) {
+      const jobMatch = u.pathname.match(/(\/[\w-]+\/jobs\/\d+)/);
+      if (jobMatch) return `https://${u.hostname}${jobMatch[1]}`;
+    }
+
+    // General: strip common tracking params for cleaner fetching
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'src', 'ref', 'fbclid', 'gclid'].forEach(p => u.searchParams.delete(p));
+    return u.toString();
   } catch (e) {}
   return url;
 }
