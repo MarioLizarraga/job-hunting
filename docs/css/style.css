@@ -158,6 +158,14 @@ h1, h2, h3, h4 { color: var(--color-heading); }
   gap: 6px;
   margin-left: auto;
 }
+.file-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 0;
+  justify-content: center;
+}
 
 .admin__content {
   flex: 1;

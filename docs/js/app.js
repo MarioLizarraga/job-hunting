@@ -1,7 +1,11 @@
 /**
  * Resume Screener — Main App (SPA with sidebar nav, MTG dark theme)
- * Dual storage: localStorage (fast) + IndexedDB (persistent backup).
- * If localStorage is cleared, data auto-restores from IndexedDB on load.
+ * 5-layer persistence:
+ *   1. localStorage  — fast reads/writes (default)
+ *   2. IndexedDB     — survives cache clears
+ *   3. File System    — auto-saves to a real file on disk (File System Access API)
+ *   4. Service Worker — caches data in SW cache storage
+ *   5. sessionStorage — survives same-tab refreshes even if everything else dies
  */
 
 /* ─── Storage ──────────────────────────────────────────────── */
@@ -12,7 +16,7 @@ const STORAGE_KEYS = {
   theme: 'rs_theme',
 };
 
-/* IndexedDB backup — survives browser restarts, cache clears, etc. */
+/* ─── Layer 2: IndexedDB backup ───────────────────────────── */
 const IDB_NAME = 'ResumeScreenerBackup';
 const IDB_STORE = 'data';
 const IDB_VERSION = 1;
@@ -39,7 +43,7 @@ async function backupToIDB() {
     };
     store.put(data, 'backup');
     db.close();
-  } catch (e) { /* silently fail — IDB is a bonus, not critical */ }
+  } catch (e) { /* silently fail */ }
 }
 
 async function restoreFromIDB() {
@@ -54,11 +58,131 @@ async function restoreFromIDB() {
   } catch (e) { return null; }
 }
 
-/* Debounced IDB backup — runs 2s after last data change */
+/* ─── Layer 3: File System Access API ─────────────────────── */
+let _fileHandle = null; // persisted file handle for auto-save
+
+async function linkBackupFile() {
+  try {
+    if (!window.showSaveFilePicker) {
+      showToast('File System API not supported — use Chrome or Edge', 'error');
+      return;
+    }
+    _fileHandle = await window.showSaveFilePicker({
+      suggestedName: 'resume-screener-backup.json',
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+    });
+    await saveToFile();
+    localStorage.setItem('rs_file_linked', 'true');
+    updateFileStatus(true);
+    showToast('Backup file linked — auto-saves on every change', 'success');
+  } catch (e) {
+    if (e.name !== 'AbortError') showToast('Could not link file: ' + e.message, 'error');
+  }
+}
+
+async function saveToFile() {
+  if (!_fileHandle) return;
+  try {
+    const data = {
+      version: 3,
+      exported: new Date().toISOString(),
+      history: getHistory(),
+      applications: getApps(),
+      resumes: getResumes(),
+    };
+    const writable = await _fileHandle.createWritable();
+    await writable.write(JSON.stringify(data, null, 2));
+    await writable.close();
+  } catch (e) {
+    // Permission revoked or file moved — unlink
+    _fileHandle = null;
+    localStorage.removeItem('rs_file_linked');
+    updateFileStatus(false);
+  }
+}
+
+async function restoreFromFile() {
+  try {
+    if (!window.showOpenFilePicker) return null;
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+    });
+    const file = await handle.getFile();
+    const text = await file.text();
+    return JSON.parse(text);
+  } catch (e) { return null; }
+}
+
+function updateFileStatus(linked) {
+  const el = document.getElementById('file-status');
+  if (el) {
+    el.style.display = linked ? 'flex' : 'none';
+    el.title = linked ? 'Auto-saving to disk file' : '';
+  }
+}
+
+/* ─── Layer 4: Service Worker cache ───────────────────────── */
+async function backupToSWCache() {
+  try {
+    if (!('caches' in window)) return;
+    const cache = await caches.open('rs-data-backup');
+    const data = {
+      history: getHistory(),
+      applications: getApps(),
+      resumes: getResumes(),
+      timestamp: new Date().toISOString(),
+    };
+    const response = new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await cache.put('/rs-backup-data', response);
+  } catch (e) { /* silently fail */ }
+}
+
+async function restoreFromSWCache() {
+  try {
+    if (!('caches' in window)) return null;
+    const cache = await caches.open('rs-data-backup');
+    const response = await cache.match('/rs-backup-data');
+    if (!response) return null;
+    return await response.json();
+  } catch (e) { return null; }
+}
+
+/* ─── Layer 5: sessionStorage snapshot ────────────────────── */
+function backupToSession() {
+  try {
+    const data = {
+      history: getHistory(),
+      applications: getApps(),
+      resumes: getResumes(),
+      timestamp: new Date().toISOString(),
+    };
+    sessionStorage.setItem('rs_session_backup', JSON.stringify(data));
+  } catch (e) { /* silently fail */ }
+}
+
+function restoreFromSession() {
+  try {
+    const raw = sessionStorage.getItem('rs_session_backup');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+/* ─── Unified backup scheduler ────────────────────────────── */
 let _backupTimer = null;
 function scheduleBackup() {
+  // Session backup is instant (same-tab safety net)
+  backupToSession();
+  // Everything else is debounced 2s
   clearTimeout(_backupTimer);
-  _backupTimer = setTimeout(backupToIDB, 2000);
+  _backupTimer = setTimeout(async () => {
+    await Promise.all([
+      backupToIDB(),
+      backupToSWCache(),
+      saveToFile(),
+    ]);
+  }, 2000);
 }
 
 function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]'); }
@@ -1165,16 +1289,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon(saved);
 
-  // Auto-restore from IndexedDB if localStorage is empty
+  // Show file link status
+  updateFileStatus(localStorage.getItem('rs_file_linked') === 'true');
+
+  // Auto-restore if localStorage is empty — try all backup layers
   const hasLocal = getHistory().length > 0 || getApps().length > 0 || getResumes().length > 0;
   if (!hasLocal) {
-    const backup = await restoreFromIDB();
+    let backup = null;
+    let source = '';
+
+    // Priority: sessionStorage > IndexedDB > SW Cache
+    backup = restoreFromSession();
     if (backup && (backup.history?.length || backup.applications?.length || backup.resumes?.length)) {
-      if (backup.history?.length) saveHistory(backup.history);
-      if (backup.applications?.length) saveApps(backup.applications);
-      if (backup.resumes?.length) saveResumes(backup.resumes);
+      source = 'session';
+    }
+
+    if (!source) {
+      backup = await restoreFromIDB();
+      if (backup && (backup.history?.length || backup.applications?.length || backup.resumes?.length)) {
+        source = 'IndexedDB';
+      }
+    }
+
+    if (!source) {
+      backup = await restoreFromSWCache();
+      if (backup && (backup.history?.length || backup.applications?.length || backup.resumes?.length)) {
+        source = 'cache';
+      }
+    }
+
+    if (source && backup) {
+      // Write directly to localStorage without triggering backup cycle
+      if (backup.history?.length) localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(backup.history));
+      if (backup.applications?.length) localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(backup.applications));
+      if (backup.resumes?.length) localStorage.setItem(STORAGE_KEYS.resumes, JSON.stringify(backup.resumes));
       const total = (backup.history?.length || 0) + (backup.applications?.length || 0) + (backup.resumes?.length || 0);
-      showToast(`Restored ${total} items from backup (${new Date(backup.timestamp).toLocaleDateString()})`, 'success', 5000);
+      const date = backup.timestamp ? ` from ${new Date(backup.timestamp).toLocaleDateString()}` : '';
+      showToast(`Restored ${total} items from ${source} backup${date}`, 'success', 5000);
     }
   }
 
