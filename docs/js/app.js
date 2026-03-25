@@ -1,6 +1,7 @@
 /**
  * Resume Screener — Main App (SPA with sidebar nav, MTG dark theme)
- * All data stored in localStorage with JSON import/export.
+ * Dual storage: localStorage (fast) + IndexedDB (persistent backup).
+ * If localStorage is cleared, data auto-restores from IndexedDB on load.
  */
 
 /* ─── Storage ──────────────────────────────────────────────── */
@@ -11,12 +12,61 @@ const STORAGE_KEYS = {
   theme: 'rs_theme',
 };
 
+/* IndexedDB backup — survives browser restarts, cache clears, etc. */
+const IDB_NAME = 'ResumeScreenerBackup';
+const IDB_STORE = 'data';
+const IDB_VERSION = 1;
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function backupToIDB() {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const data = {
+      history: getHistory(),
+      applications: getApps(),
+      resumes: getResumes(),
+      timestamp: new Date().toISOString(),
+    };
+    store.put(data, 'backup');
+    db.close();
+  } catch (e) { /* silently fail — IDB is a bonus, not critical */ }
+}
+
+async function restoreFromIDB() {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get('backup');
+      req.onsuccess = () => { db.close(); resolve(req.result || null); };
+      req.onerror = () => { db.close(); resolve(null); };
+    });
+  } catch (e) { return null; }
+}
+
+/* Debounced IDB backup — runs 2s after last data change */
+let _backupTimer = null;
+function scheduleBackup() {
+  clearTimeout(_backupTimer);
+  _backupTimer = setTimeout(backupToIDB, 2000);
+}
+
 function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]'); }
-function saveHistory(h) { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(h)); }
+function saveHistory(h) { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(h)); scheduleBackup(); }
 function getApps() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.applications) || '[]'); }
-function saveApps(a) { localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(a)); }
+function saveApps(a) { localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(a)); scheduleBackup(); }
 function getResumes() { return JSON.parse(localStorage.getItem(STORAGE_KEYS.resumes) || '[]'); }
-function saveResumes(r) { localStorage.setItem(STORAGE_KEYS.resumes, JSON.stringify(r)); }
+function saveResumes(r) { localStorage.setItem(STORAGE_KEYS.resumes, JSON.stringify(r)); scheduleBackup(); }
 
 /* ─── Toast ────────────────────────────────────────────────── */
 function showToast(message, type = 'info', duration = 3000) {
@@ -1110,9 +1160,23 @@ function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 /* ─── Init ─────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const saved = localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon(saved);
+
+  // Auto-restore from IndexedDB if localStorage is empty
+  const hasLocal = getHistory().length > 0 || getApps().length > 0 || getResumes().length > 0;
+  if (!hasLocal) {
+    const backup = await restoreFromIDB();
+    if (backup && (backup.history?.length || backup.applications?.length || backup.resumes?.length)) {
+      if (backup.history?.length) saveHistory(backup.history);
+      if (backup.applications?.length) saveApps(backup.applications);
+      if (backup.resumes?.length) saveResumes(backup.resumes);
+      const total = (backup.history?.length || 0) + (backup.applications?.length || 0) + (backup.resumes?.length || 0);
+      showToast(`Restored ${total} items from backup (${new Date(backup.timestamp).toLocaleDateString()})`, 'success', 5000);
+    }
+  }
+
   navigate(localStorage.getItem('rs_page') || 'dashboard');
 });
