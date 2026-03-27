@@ -1,11 +1,12 @@
 /**
  * Resume Screener — Main App (SPA with sidebar nav, MTG dark theme)
- * 5-layer persistence:
+ * 6-layer persistence:
  *   1. localStorage  — fast reads/writes (default)
- *   2. IndexedDB     — survives cache clears
+ *   2. IndexedDB     — survives some cache clears
  *   3. File System    — auto-saves to a real file on disk (File System Access API)
  *   4. Service Worker — caches data in SW cache storage
- *   5. sessionStorage — survives same-tab refreshes even if everything else dies
+ *   5. sessionStorage — survives same-tab refreshes
+ *   6. GitHub repo    — committed backup.json, survives EVERYTHING
  */
 
 /* ─── Storage ──────────────────────────────────────────────── */
@@ -167,6 +168,40 @@ function restoreFromSession() {
     const raw = sessionStorage.getItem('rs_session_backup');
     return raw ? JSON.parse(raw) : null;
   } catch (e) { return null; }
+}
+
+/* ─── Layer 6: GitHub repo committed backup ──────────────── */
+async function restoreFromGitHub() {
+  try {
+    // Fetch the committed backup.json from the same GitHub Pages origin
+    const resp = await fetch('./data/backup.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data && (data.history?.length || data.applications?.length || data.resumes?.length)) {
+      return data;
+    }
+    return null;
+  } catch (e) { return null; }
+}
+
+function exportBackupForCommit() {
+  // Downloads backup.json — user places it in docs/data/ and commits
+  const data = {
+    version: 4,
+    exported: new Date().toISOString(),
+    history: getHistory(),
+    applications: getApps(),
+    resumes: getResumes(),
+    interviewAnswers: (() => { try { return JSON.parse(localStorage.getItem('rs_interview_answers') || 'null'); } catch(e) { return null; } })(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded — save to docs/data/backup.json and git push', 'success', 6000);
 }
 
 /* ─── Unified backup scheduler ────────────────────────────── */
@@ -1318,14 +1353,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
+    // Layer 6: GitHub committed backup — survives everything
+    if (!source) {
+      backup = await restoreFromGitHub();
+      if (backup) {
+        source = 'GitHub backup';
+      }
+    }
+
     if (source && backup) {
       // Write directly to localStorage without triggering backup cycle
       if (backup.history?.length) localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(backup.history));
       if (backup.applications?.length) localStorage.setItem(STORAGE_KEYS.applications, JSON.stringify(backup.applications));
       if (backup.resumes?.length) localStorage.setItem(STORAGE_KEYS.resumes, JSON.stringify(backup.resumes));
+      if (backup.interviewAnswers) localStorage.setItem('rs_interview_answers', JSON.stringify(backup.interviewAnswers));
       const total = (backup.history?.length || 0) + (backup.applications?.length || 0) + (backup.resumes?.length || 0);
-      const date = backup.timestamp ? ` from ${new Date(backup.timestamp).toLocaleDateString()}` : '';
-      showToast(`Restored ${total} items from ${source} backup${date}`, 'success', 5000);
+      const date = backup.exported ? ` from ${new Date(backup.exported).toLocaleDateString()}` : (backup.timestamp ? ` from ${new Date(backup.timestamp).toLocaleDateString()}` : '');
+      showToast(`Restored ${total} items from ${source}${date}`, 'success', 5000);
+      // Re-backup to all browser layers so next refresh is fast
+      scheduleBackup();
+    } else if (!hasLocal) {
+      // No data anywhere — show helpful message
+      showToast('No saved data found. Start scanning resumes or import a backup.', 'info', 5000);
     }
   }
 
