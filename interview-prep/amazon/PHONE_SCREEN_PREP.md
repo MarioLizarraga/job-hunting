@@ -262,9 +262,70 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 
 ---
 
+## HOW THE SCORING WORKS (from research)
+
+**Rating scale:**
+- **Strongly Inclined** — Clear hire, exceeds the bar
+- **Inclined** — Passed, should get an offer
+- **Neutral** — Neither for nor against
+- **Not Inclined** — Did not pass
+- **Strongly Not Inclined** — Reserved for serious issues (fabrication, ethics)
+
+**What makes someone "Not Inclined" on Dive Deep:**
+- Surface-level answers without analytical rigor
+- Can't explain the "how" of problem-solving
+- Vague language ("we improved things") instead of specific data
+- Can't go deeper when probed with follow-ups
+- No root cause analysis or skepticism of initial assumptions
+
+**What separates "Strong Hire" from "Inclined":**
+- Multiple layers of depth + specific metrics
+- Clear personal ownership ("I" not "we")
+- Excitement about problem-solving (interviewers love when you get visibly engaged going 4-5 levels deep)
+- Research turned into measurable action
+- Lessons learned applied forward
+
+---
+
+## PHONE SCREEN FORMAT (from research)
+
+- **4-6 questions total** in 45-60 min (not 3-4 as I originally said)
+- **7-11 minutes per question** including follow-ups
+- Your initial STAR response: **2-3 minutes**
+- Then 2-3 follow-up probes per story
+- Brief intro/rapport: 2-5 min
+- Your questions for Stephen: 5 min at end
+
+**Stephen as Hiring Manager (HM) — what this means:**
+1. **He has VETO POWER** — even if every loop interviewer says hire, Stephen can block it
+2. **He evaluates holistic team fit**, not just one LP — loop interviewers get assigned specific LPs, Stephen takes the full picture
+3. **He knows exactly what gaps the team has** — his questions are designed around the actual work
+4. **If Stephen is not inclined, there is NO loop** — this is pass/fail for advancing
+5. **His style may be more conversational** than a loop interviewer's rigid LP assessment
+6. **He's thinking long-term** — "will this person grow with us?" not just "can they do the job today?"
+
+---
+
+## COMMON MISTAKES TO AVOID (from Amazon's own recruiters)
+
+1. **Failing to include enough data** — Replace vague with specific, quantifiable information
+2. **Using "we" instead of "I"** — Interviewers CANNOT assess YOUR impact if you say "we"
+3. **Not using STAR** — Interviewers need to follow your story structure
+4. **Freezing or rambling** — Keep answers under 3 minutes, then let follow-ups guide you deeper
+5. **Failing to ask questions** — Always have 3-4 prepared. Shows genuine interest.
+6. **Not preparing for follow-up probes** — Know your top stories well enough to discuss for 20 minutes each
+
+**How to handle "tell me more" probes:**
+- Don't get flustered — follow-ups mean the interviewer is ENGAGED (good sign)
+- Switch from "we" to "I" and clarify your specific role
+- Include trade-offs, constraints, and what you'd do differently
+- Use timeline markers and specific numbers
+
+---
+
 ## CRITICAL REMINDERS
 
-1. **Stephen is the HIRING MANAGER** — this isn't just a screen, it's the person who decides if you join his team. Show him you'd be a strong, autonomous contributor.
+1. **Stephen is the HIRING MANAGER** — this isn't just a screen, it's the person who decides if you join his team. He has veto power. Show him you'd be a strong, autonomous contributor.
 
 2. **He builds data pipelines and dashboards** — your monitoring platform story will resonate deeply. Mention it naturally.
 
@@ -274,6 +335,8 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 
 5. **It's a PHONE screen** — slightly more relaxed than an onsite loop. Conversational tone is fine. But still structured STAR answers.
 
-6. **Prepare for 3-4 questions total** — a 45-60 min interview with intro and questions-for-you time means 3-4 behavioral/technical questions, each with 2-3 follow-ups.
+6. **Prepare for 4-6 questions total** — each with 2-3 follow-ups. Quality and depth matter more than covering many stories.
 
-7. **Use Amazon LP language naturally** — don't say "I demonstrated Dive Deep." Instead, just tell the story and let the LP speak for itself.
+7. **Use Amazon LP language naturally** — don't say "I demonstrated Dive Deep." Just tell the story and let the LP speak for itself.
+
+8. **Get visibly excited when diving deep** — interviewers LOVE when candidates get engaged going 4-5 levels deep into a problem. Your thermal expansion story is perfect for this — show the excitement of the detective work.
