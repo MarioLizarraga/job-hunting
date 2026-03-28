@@ -81,6 +81,37 @@ function showTab(companyKey, tab, btn) {
   }
 }
 
+function renderLPGrid(color) {
+  const lps = [
+    { name: 'Customer Obsession', desc: 'Start with the customer and work backwards', tested: false },
+    { name: 'Ownership', desc: 'Think long term, never say "that\'s not my job"', tested: false },
+    { name: 'Invent and Simplify', desc: 'Expect innovation, always find ways to simplify', tested: false },
+    { name: 'Are Right, A Lot', desc: 'Strong judgment, seek diverse perspectives', tested: true },
+    { name: 'Learn and Be Curious', desc: 'Never done learning, always improve', tested: false },
+    { name: 'Hire and Develop the Best', desc: 'Raise the bar with every hire', tested: false },
+    { name: 'Insist on the Highest Standards', desc: 'Relentlessly high standards', tested: false },
+    { name: 'Think Big', desc: 'Create bold direction that inspires results', tested: false },
+    { name: 'Bias for Action', desc: 'Speed matters, most decisions are reversible', tested: true },
+    { name: 'Frugality', desc: 'Accomplish more with less', tested: false },
+    { name: 'Earn Trust', desc: 'Listen, speak candidly, be vocally self-critical', tested: false },
+    { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true },
+    { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false },
+    { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false },
+    { name: "Strive to be Earth's Best Employer", desc: 'Create safer, more productive work environment', tested: false },
+    { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false },
+  ];
+  return lps.map(function(lp) {
+    var borderColor = lp.tested ? color : 'var(--color-border)';
+    var bgColor = lp.tested ? color + '15' : 'var(--color-bg)';
+    var textColor = lp.tested ? color : 'var(--color-heading)';
+    var star = lp.tested ? '&#9733; ' : '';
+    return '<div style="padding:10px 12px;border-radius:var(--radius-sm);border:1px solid ' + borderColor + ';background:' + bgColor + '">' +
+      '<div style="font-size:0.8rem;font-weight:700;color:' + textColor + '">' + star + lp.name + '</div>' +
+      '<div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:2px">' + lp.desc + '</div>' +
+    '</div>';
+  }).join('');
+}
+
 function renderPhoneScreenTab(el, co) {
   const ps = co.phoneScreen;
   if (!ps) { el.innerHTML = '<p>No phone screen scheduled.</p>'; return; }
@@ -160,29 +191,7 @@ function renderPhoneScreenTab(el, co) {
       <h3 style="color:var(--color-heading);margin-bottom:4px">Amazon's 16 Leadership Principles</h3>
       <p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">The 3 being tested in your phone screen are highlighted</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
-        ${[
-          { name: 'Customer Obsession', desc: 'Start with the customer and work backwards', tested: false },
-          { name: 'Ownership', desc: 'Think long term, never say "that\\'s not my job"', tested: false },
-          { name: 'Invent and Simplify', desc: 'Expect innovation, always find ways to simplify', tested: false },
-          { name: 'Are Right, A Lot', desc: 'Strong judgment, seek diverse perspectives', tested: true },
-          { name: 'Learn and Be Curious', desc: 'Never done learning, always improve', tested: false },
-          { name: 'Hire and Develop the Best', desc: 'Raise the bar with every hire', tested: false },
-          { name: 'Insist on the Highest Standards', desc: 'Relentlessly high standards', tested: false },
-          { name: 'Think Big', desc: 'Create bold direction that inspires results', tested: false },
-          { name: 'Bias for Action', desc: 'Speed matters, most decisions are reversible', tested: true },
-          { name: 'Frugality', desc: 'Accomplish more with less', tested: false },
-          { name: 'Earn Trust', desc: 'Listen, speak candidly, be vocally self-critical', tested: false },
-          { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true },
-          { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false },
-          { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false },
-          { name: 'Strive to be Earth\\'s Best Employer', desc: 'Create safer, more productive work environment', tested: false },
-          { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false },
-        ].map(lp => \`
-          <div style="padding:10px 12px;border-radius:var(--radius-sm);border:1px solid \${lp.tested ? co.color : 'var(--color-border)'};background:\${lp.tested ? co.color + '15' : 'var(--color-bg)'}">
-            <div style="font-size:0.8rem;font-weight:700;color:\${lp.tested ? co.color : 'var(--color-heading)'}">\${lp.tested ? '&#9733; ' : ''}\${lp.name}</div>
-            <div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:2px">\${lp.desc}</div>
-          </div>
-        \`).join('')}
+        ${renderLPGrid(co.color)}
       </div>
       <div style="margin-top:12px;font-size:0.75rem;color:var(--color-text-muted)">&#9733; = Being tested in your phone screen (Dive Deep, Dealing with Ambiguity maps to Bias for Action + Are Right A Lot)</div>
     </div>
