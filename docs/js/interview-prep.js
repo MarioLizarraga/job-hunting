@@ -97,7 +97,7 @@ function renderLPGrid(color) {
     { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true },
     { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false },
     { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false },
-    { name: "Strive to be Earth's Best Employer", desc: 'Create safer, more productive work environment', tested: false },
+    { name: 'Strive to be Earth\'s Best Employer', desc: 'Create safer, more productive work environment', tested: false },
     { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false },
   ];
   return lps.map(function(lp) {
