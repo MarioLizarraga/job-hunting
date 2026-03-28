@@ -124,6 +124,69 @@ function renderPhoneScreenTab(el, co) {
       <div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">${ps.tellMeAboutYourself}</div>
     </div>
 
+    <!-- STAR Method Quick Reference -->
+    <div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">
+      <h3 style="color:var(--color-heading);margin-bottom:12px">The STAR Method</h3>
+      <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:14px">Amazon uses behavioral questions tied to Leadership Principles. Structure every answer with STAR:</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
+          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">S</div>
+          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Situation</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">Set the scene in 2 sentences. What was happening? What was the challenge?</div>
+        </div>
+        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
+          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">T</div>
+          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Task</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">1 sentence. What was YOUR goal or responsibility?</div>
+        </div>
+        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
+          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">A</div>
+          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Action</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">60-70% of your answer. What did YOU specifically do? Say "I" not "we".</div>
+        </div>
+        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
+          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">R</div>
+          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Result</div>
+          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">Quantified outcome + what you learned. Always include numbers.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px 14px;background:${co.color}11;border-radius:var(--radius-sm);font-size:0.78rem;color:var(--color-text)">
+        <strong style="color:${co.color}">Target:</strong> 2-3 minutes per answer. Under 1 min = too shallow. Over 4 min = rambling. The interviewer will ask follow-ups to go deeper — that's a good sign.
+      </div>
+    </div>
+
+    <!-- Leadership Principles Quick Reference -->
+    <div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">
+      <h3 style="color:var(--color-heading);margin-bottom:4px">Amazon's 16 Leadership Principles</h3>
+      <p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">The 3 being tested in your phone screen are highlighted</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+        ${[
+          { name: 'Customer Obsession', desc: 'Start with the customer and work backwards', tested: false },
+          { name: 'Ownership', desc: 'Think long term, never say "that\\'s not my job"', tested: false },
+          { name: 'Invent and Simplify', desc: 'Expect innovation, always find ways to simplify', tested: false },
+          { name: 'Are Right, A Lot', desc: 'Strong judgment, seek diverse perspectives', tested: true },
+          { name: 'Learn and Be Curious', desc: 'Never done learning, always improve', tested: false },
+          { name: 'Hire and Develop the Best', desc: 'Raise the bar with every hire', tested: false },
+          { name: 'Insist on the Highest Standards', desc: 'Relentlessly high standards', tested: false },
+          { name: 'Think Big', desc: 'Create bold direction that inspires results', tested: false },
+          { name: 'Bias for Action', desc: 'Speed matters, most decisions are reversible', tested: true },
+          { name: 'Frugality', desc: 'Accomplish more with less', tested: false },
+          { name: 'Earn Trust', desc: 'Listen, speak candidly, be vocally self-critical', tested: false },
+          { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true },
+          { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false },
+          { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false },
+          { name: 'Strive to be Earth\\'s Best Employer', desc: 'Create safer, more productive work environment', tested: false },
+          { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false },
+        ].map(lp => \`
+          <div style="padding:10px 12px;border-radius:var(--radius-sm);border:1px solid \${lp.tested ? co.color : 'var(--color-border)'};background:\${lp.tested ? co.color + '15' : 'var(--color-bg)'}">
+            <div style="font-size:0.8rem;font-weight:700;color:\${lp.tested ? co.color : 'var(--color-heading)'}">\${lp.tested ? '&#9733; ' : ''}\${lp.name}</div>
+            <div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:2px">\${lp.desc}</div>
+          </div>
+        \`).join('')}
+      </div>
+      <div style="margin-top:12px;font-size:0.75rem;color:var(--color-text-muted)">&#9733; = Being tested in your phone screen (Dive Deep, Dealing with Ambiguity maps to Bias for Action + Are Right A Lot)</div>
+    </div>
+
     <!-- 3 Focus Areas -->
     <h3 style="color:var(--color-heading);margin-bottom:16px">The 3 Focus Areas</h3>
     ${ps.focusAreas.map((area, aIdx) => `
