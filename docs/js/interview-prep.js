@@ -153,6 +153,13 @@ function renderPhoneScreenTab(el, co) {
               <div style="margin-bottom:8px"><span style="color:${co.color};font-weight:700">A:</span> <span style="color:var(--color-text)">${story.star.a}</span></div>
               <div style="margin-bottom:12px"><span style="color:${co.color};font-weight:700">R:</span> <span style="color:var(--color-text)">${story.star.r}</span></div>
             </div>
+            ${story.conversational ? `
+              <details style="margin-top:12px;border-top:1px solid var(--color-border);padding-top:12px">
+                <summary style="cursor:pointer;font-size:0.82rem;color:var(--color-success);font-weight:600">How I\'d actually say it (conversational version)</summary>
+                <div style="margin-top:10px;font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid var(--color-success)">${story.conversational}</div>
+              </details>
+            ` : ''}
+
             ${story.followUps?.length ? `
               <details style="margin-top:8px">
                 <summary style="cursor:pointer;font-size:0.82rem;color:${co.color};font-weight:600">Prepare for ${story.followUps.length} follow-up questions</summary>
