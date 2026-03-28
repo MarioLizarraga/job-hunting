@@ -55,6 +55,15 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 >
 > **Key LP signals:** Skeptical of the easy answer. Used data to disprove the anecdote. Went hands-on with the analysis. Found the real root cause three layers deep.
 
+**How I'd actually say it (conversational version):**
+> "So we had this robot arm test system I'd built at Safran — it uses a UFactory 850 arm with a FUTEK load cell to test illuminated cockpit panels. It was working great for months, but then about 15% of panels started randomly failing when they shouldn't have. The technicians kept telling me to just recalibrate the robot, but something didn't feel right — if it were a calibration issue, it should've affected all panels equally, not randomly.
+>
+> So instead of recalibrating, I pulled two full weeks of force data into Python and really dug into it. I used SciPy — Savitzky-Golay smoothing, peak detection — and plotted every single press cycle color-coded by pass/fail, time of day, fixture position. And this clear pattern popped out: the failures were spiking in the afternoon. Not random at all.
+>
+> I cross-referenced that with temperature logs from our monitoring platform, and it clicked — the 3D-printed fixture was thermally expanding. The afternoon sun heats up that side of the shop floor, and the fixture was shifting about 0.3 millimeters. That's enough to throw off the force readings and trigger false failures.
+>
+> So the root cause wasn't calibration at all — it was material choice. I switched to a material with lower thermal expansion, and false failures dropped from 15% to under 1%. If I'd just recalibrated like everyone wanted, we'd honestly still be chasing that problem every week."
+
 **Follow-up questions to prepare for:**
 - "How did you choose which data to analyze?" → I started broad (all variables) and narrowed based on correlation patterns. Time of day was the strongest signal.
 - "Why didn't you trust the recalibration suggestion?" → The failures weren't consistent across all panels — if it were calibration, all panels would drift, not just afternoon ones.
@@ -69,6 +78,15 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 > **A:** Didn't trust the spec sheet. Ordered evaluation units from FUTEK and a competitor. Designed a head-to-head comparison test: applied calibrated masses at various rates, checked linearity, repeatability, and thermal drift. FUTEK matched their claims. The competitor showed 3x more drift at elevated temperatures — critical because our shop floor has real temperature swings throughout the day.
 >
 > **R:** Data justified FUTEK's 40% price premium. Negotiated volume pricing and a spare parts agreement. I don't put anything in production that I haven't independently validated.
+
+**How I'd actually say it (conversational version):**
+> "When I was picking the force sensor for our robot arm system, I evaluated three vendors. FUTEK was claiming sub-Newton accuracy and millisecond response, which sounded great on paper. But I've learned not to trust spec sheets — vendors have every incentive to show their product in the best possible light.
+>
+> So I ordered evaluation units from FUTEK and one of their competitors, and I designed a head-to-head test. I applied calibrated masses at different rates, checked linearity, repeatability, and — this was the big one — thermal drift. Because our shop floor has real temperature swings throughout the day, and I'd already learned the hard way that temperature matters in our environment.
+>
+> FUTEK's sensor performed exactly as advertised. The competitor showed about three times more drift at elevated temperatures. That was the deciding factor — in our environment, that drift would've caused measurement errors.
+>
+> So the data justified FUTEK's 40% price premium. I also negotiated volume pricing and a spare parts agreement while I was at it. I did the same kind of independent validation for the robot arm itself — tested repeatability at our actual press forces, verified the Python SDK, and stress-tested for 10,000 cycles before I committed to production deployment. I just don't put things into production that I haven't validated myself."
 
 ---
 
@@ -93,6 +111,13 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 >
 > **R:** System has been running reliably in production. The decision worked because I matched the tool to actual requirements, not to what felt safest. I acted at 70% information rather than waiting for 100%.
 
+**How I'd actually say it (conversational version):**
+> "So I had to pick the robot arm for our test system, and it came down to a UFactory 850 cobot versus a more expensive Fanuc. The Fanuc was the 'safe' choice — bigger brand, more documentation, better support — but it cost about $15K more. And the budget cycle was closing in three days, so I couldn't do a months-long evaluation.
+>
+> I couldn't test both robots in that timeframe. So I asked myself: what actually matters for this application? Three things — force accuracy at our working range, a Python SDK so I could develop fast, and total cost including all the peripherals. Our use case was pretty straightforward — pick-and-press motions, not complex path planning — so the UFactory's specs were well within what we needed. And that $15K in savings? That funded the FUTEK sensors and the STM32 hardware, which we needed no matter which robot we chose.
+>
+> I accepted the risk of less community support because I could mitigate it — I committed to documenting every integration issue as I went, basically building our own knowledge base. And honestly, the system has been running reliably in production. The decision worked because I matched the tool to the actual requirements instead of going with what felt safest. Sometimes you have to act with 70% of the information rather than waiting for 100%."
+
 #### Story B: Building the Test System From Scratch — No Spec, No Precedent (BACKUP)
 > **S:** When I was hired at Safran, there was no specification for what the automated test system should do. No requirements document. The old equipment barely worked and nobody had documented what it actually tested or why.
 >
@@ -103,6 +128,15 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 > Rather than trying to get perfect requirements signed off (which could take months in aerospace), I shipped an 80% version in six weeks that handled the most common panel types. I ran it in parallel with the manual process to validate results matched. Then I iterated.
 >
 > **R:** Went from zero spec to production system in under three months. 67% time reduction, 1,300+ hours/year freed. The lesson: when requirements don't exist, go observe the actual work, define your own spec, and iterate.
+
+**How I'd actually say it (conversational version):**
+> "When I was hired at Safran, there was literally no specification for what the automated test system should do. No requirements document, no test protocol — the legacy equipment barely worked, and nobody had ever documented what it actually tested or why. Just tribal knowledge with the technicians.
+>
+> So I had a choice — I could spend months trying to get formal requirements signed off through the aerospace quality process, or I could go figure it out myself. I chose to go observe. I sat with the technicians for a full week, just watching them test panels manually. Every step, every measurement, every judgment call — I documented all of it. Then I reverse-engineered the actual requirements from what they were doing: force limits, travel limits, continuity thresholds.
+>
+> Rather than waiting for a perfect spec, I shipped an 80% version in about six weeks. It handled the most common panel types automatically. I ran it in parallel with the manual process to validate — compared 100 panels side by side, got 99% agreement. That told me my self-defined requirements matched reality. Then I iterated over the following months to cover the remaining panel types.
+>
+> We went from zero spec to a production system in under three months. Test time dropped 67%, freed over 1,300 hours per year. The lesson for me was: when requirements don't exist, don't wait for someone to write them. Go observe the actual work, define your own spec, and iterate fast."
 
 ---
 
@@ -129,6 +163,15 @@ Stephen leads the Systems Engineering and Analytics Team (AT-SEA) within Amazon'
 > Each revision was informed by test data — I measured dimensional accuracy after 500, 1000, 2000 cycles and tracked degradation.
 >
 > **R:** Final design achieves sub-millimeter repeatability across all panel types. Reduced fixture inventory from potentially dozens of custom jigs to one base + small adapters. And because each adapter is just a small flat plate with locating holes, a new panel type can be supported in hours, not weeks.
+
+**How I'd actually say it (conversational version):**
+> "So at Safran, we make illuminated cockpit panels — each one has a completely different switch layout. The robot arm needs sub-millimeter alignment to press each switch accurately and get reliable force measurements. The obvious approach would've been to machine a custom fixture for every panel type, but that would've meant dozens of fixtures, each costing hundreds of dollars with weeks of lead time.
+>
+> Instead, I designed a modular system in SolidWorks. There's a universal base plate with precision locating features that handles the robot-to-fixture alignment, and then small swappable adapter plates for each panel type that handle the panel-to-fixture alignment. So you get the precision of a custom fixture with the flexibility of a modular system.
+>
+> I went through four-plus design revisions, and each one taught me something. The first version was FDM printed — worked okay but the layer lines created inconsistent mating surfaces, so alignment wasn't reliable enough. Rev 2 I switched to SLA printing, much better surface finish, and that's where I first hit sub-millimeter accuracy. Rev 3 I added alignment pins and kinematic locating features for repeatable adapter mounting. And Rev 4 was the material change — that was after I discovered the thermal expansion issue during production, where the afternoon heat was causing dimensional shift.
+>
+> Each revision was driven by test data — I measured dimensional accuracy after 500, 1,000, 2,000 cycles and tracked degradation. The final design gives us sub-millimeter repeatability across all panel types. And because each adapter is just a small flat plate with a few locating holes, I can support a brand-new panel type in hours instead of weeks. That's a huge deal in aerospace where we're constantly getting new panel designs from customers."
 
 **GD&T topics to refresh (30 min before the interview):**
 - Position tolerance (most common question)
