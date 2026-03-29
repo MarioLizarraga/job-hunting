@@ -53,6 +53,7 @@ function openCompany(key) {
 
     <div class="interview__tabs">
       ${co.phoneScreen ? `<button class="interview__tab active" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success);font-weight:700">Phone Screen Prep</button>` : ''}
+      ${key === 'amazon' ? `<button class="interview__tab" onclick="showTab('${key}','lps',this)" style="color:#FF9900">Leadership Principles</button>` : ''}
       <button class="interview__tab ${co.phoneScreen ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
       <button class="interview__tab" onclick="showTab('${key}','questions',this)">Questions & Answers</button>
       <button class="interview__tab" onclick="showTab('${key}','study',this)">Study Guide</button>
@@ -74,6 +75,7 @@ function showTab(companyKey, tab, btn) {
 
   switch (tab) {
     case 'phonescreen': renderPhoneScreenTab(content, co); break;
+    case 'lps': renderLPsTab(content, co); break;
     case 'process': renderProcessTab(content, co); break;
     case 'questions': renderQuestionsTab(content, co, companyKey); break;
     case 'study': renderStudyTab(content, co); break;
@@ -81,35 +83,115 @@ function showTab(companyKey, tab, btn) {
   }
 }
 
-function renderLPGrid(color) {
-  const lps = [
-    { name: 'Customer Obsession', desc: 'Start with the customer and work backwards', tested: false },
-    { name: 'Ownership', desc: 'Think long term, never say "that\'s not my job"', tested: false },
-    { name: 'Invent and Simplify', desc: 'Expect innovation, always find ways to simplify', tested: false },
-    { name: 'Are Right, A Lot', desc: 'Strong judgment, seek diverse perspectives', tested: true },
-    { name: 'Learn and Be Curious', desc: 'Never done learning, always improve', tested: false },
-    { name: 'Hire and Develop the Best', desc: 'Raise the bar with every hire', tested: false },
-    { name: 'Insist on the Highest Standards', desc: 'Relentlessly high standards', tested: false },
-    { name: 'Think Big', desc: 'Create bold direction that inspires results', tested: false },
-    { name: 'Bias for Action', desc: 'Speed matters, most decisions are reversible', tested: true },
-    { name: 'Frugality', desc: 'Accomplish more with less', tested: false },
-    { name: 'Earn Trust', desc: 'Listen, speak candidly, be vocally self-critical', tested: false },
-    { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true },
-    { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false },
-    { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false },
-    { name: 'Strive to be Earth\'s Best Employer', desc: 'Create safer, more productive work environment', tested: false },
-    { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false },
-  ];
-  return lps.map(function(lp) {
+const LP_DATA = [
+  { name: 'Customer Obsession', desc: 'Start with the customer and work backwards', tested: false,
+    meaning: 'EVERYTHING starts with the customer. Amazon won\'t write code until the "working backwards" documents (press release + FAQ) prove the product matters. Being aware of competitors is fine, but spend most time on what customers want. Being customer-obsessed doesn\'t mean ignoring economics — unsustainable businesses don\'t help customers long-term.',
+    lookFor: 'Stories where you prioritized the customer\'s need over what was easy, popular, or profitable short-term.',
+    mistake: 'Thinking it means ignoring business sustainability.',
+    quote: '"If you\'re trying to help customers make the best possible decision for themselves, having honest customer reviews is incredibly helpful."' },
+  { name: 'Ownership', desc: 'Think long term, never say "that\'s not my job"', tested: false,
+    meaning: 'Think like it\'s your personal money. The renters vs owners analogy: a renter nails a Christmas tree into hardwood floors — an owner never would. If you see a problem with no owner, find the owner or fix it yourself. Don\'t assume someone else has it. Think from the entire company perspective, not just your team.',
+    lookFor: 'Stories where you went beyond your job description, took ownership of something nobody asked you to, thought long-term.',
+    mistake: '"I don\'t get paid more for that." That\'s the anti-ownership answer.',
+    quote: '"Owners ensure the problems are owned, that they have a path to resolution, and they drive it themselves as needed."' },
+  { name: 'Invent and Simplify', desc: 'Expect innovation, always find ways to simplify', tested: false,
+    meaning: 'Most companies succeed on ONE idea then iterate forever. Amazon constantly reinvents. The Marketplace story: tried auctions (failed — Ebay clone), then Z-shops (nobody visited), then the simplifying assumption — put 3P items on same product pages as 1P. That one insight unlocked 65% of all units sold today. Be externally aware. Don\'t reject ideas because "not invented here."',
+    lookFor: 'Stories where you found a simplifying insight that unlocked a problem, or invented something new rather than just iterating.',
+    mistake: 'Describing incremental improvements as "invention." Real invention changes the game.',
+    quote: '"It wasn\'t until we came up with a simplifying assumption... which in retrospect seems blindingly obvious."' },
+  { name: 'Are Right, A Lot', desc: 'Strong judgment, seek diverse perspectives', tested: true,
+    meaning: 'This is about JUDGMENT, not winning arguments. The goal is the best answer for customers — doesn\'t matter whose idea it is. Leaders speak LAST. They want everyone\'s input first. Great leaders actively try to disprove their own beliefs. In the best meetings, the leader never even expresses an opinion — the team sorts it out.',
+    lookFor: 'Stories where you changed your mind based on new data, or helped a group reach the right answer (not YOUR answer).',
+    mistake: 'Thinking it means always pushing your idea. It means getting to the best answer, period.',
+    quote: '"All we care about as leaders is getting to the best possible answer for customers. That\'s our job."' },
+  { name: 'Learn and Be Curious', desc: 'Never done learning, always improve', tested: false,
+    meaning: 'The #1 differentiator between people who grow vs. stagnate. The moment you think there\'s little left to learn, you\'re unwinding. It\'s not enough to TALK about learning — build a plan and actually change. When your field flips upside down, see it as fun, not threatening.',
+    lookFor: 'Concrete examples of learning something new AND applying it. Not courses — real skills built and deployed.',
+    mistake: 'Talking about learning without the result. "I took a course" is weak. "I learned X in a week and shipped Y" is strong.',
+    quote: '"The second you think there\'s little left to learn is the second you are unwinding as an individual."' },
+  { name: 'Hire and Develop the Best', desc: 'Raise the bar with every hire', tested: false,
+    meaning: 'In hiring loops, each interviewer takes an LP — that\'s how Amazon defines "great people." Always ask: does this person raise the bar? NEVER lower it, even under time pressure. Being a manager is a PRIVILEGE with responsibility to develop people. The managers with biggest career impact weren\'t the nicest — they identified where you needed to grow.',
+    lookFor: 'Stories about mentoring, developing people, giving hard feedback, and the measurable growth that resulted.',
+    mistake: 'Only talking about what reports did well. Show how you identified growth areas and coached through them.',
+    quote: '"The managers who had the biggest impact in my career were not necessarily the ones that were the nicest to me."' },
+  { name: 'Insist on the Highest Standards', desc: 'Relentlessly high standards', tested: false,
+    meaning: '"Perhaps unreasonably high, but it\'s the right level." Higher expectations ALWAYS lead to better results. You can\'t be in every meeting — so MODEL what good looks like in the meetings you ARE in. It spreads. Standards slipped during COVID. "Keep fighting. That is a fight worth fighting."',
+    lookFor: 'Stories where you raised standards others thought were too high, and results proved it right. Or caught a defect before it went downstream.',
+    mistake: 'Confusing high standards with perfectionism. High standards + speed = the goal.',
+    quote: '"Higher expectations lead to better results."' },
+  { name: 'Think Big', desc: 'Create bold direction that inspires results', tested: false,
+    meaning: 'If you want a company lasting 100+ years, you can\'t run the same playbook for decades. Look around corners: what technology will change the customer experience? Examples: multi-day to 2-day to same-day to drone delivery. AWS. Kuiper broadband. Healthcare reinvention. Taking risks is hard — that\'s why Think Big leaders are so important.',
+    lookFor: 'Stories where you saw a bigger opportunity than what was asked, or proposed a bold approach others thought too ambitious.',
+    mistake: 'Confusing "think big" with "dream big." Think Big requires action — a bold direction you actually pursue.',
+    quote: '"If you want to build a company that lasts over 100 years, you cannot run the same playbook for decades."' },
+  { name: 'Bias for Action', desc: 'Speed matters, most decisions are reversible', tested: true,
+    meaning: 'Speed disproportionately matters at every size. "Speed is not preordained, it is a leadership and culture decision." Two-way doors (reversible) = decide quickly at team level. One-way doors (irreversible) = small number, think carefully. Most decisions are two-way doors. "Don\'t take weeks to get done what could be done in days or hours." Think of every opportunity as a closing window.',
+    lookFor: 'Stories where you acted decisively with incomplete information. Bonus: identifying it was a two-way door.',
+    mistake: 'Describing recklessness as speed. Bias for Action = calculated risk, not carelessness.',
+    quote: '"Think of ourselves as being the world\'s biggest startup. That\'s the way we need to behave."' },
+  { name: 'Frugality', desc: 'Accomplish more with less', tested: false,
+    meaning: 'Door desks are a SIGNAL: scrappy, no garnishing. "I\'ll bend over for a penny." Constraints BREED invention — AWS built S3 and EC2 with 13-person teams each. "Don\'t get numb to large numbers." Don\'t believe the best way to build your career is having large teams. Amazon values people who build amazing things LEANLY.',
+    lookFor: 'Stories where you accomplished something impressive with limited resources, or reduced cost without sacrificing quality.',
+    mistake: 'Confusing frugality with cheapness. Frugality = more impact per dollar.',
+    quote: '"Our very best people, our very best teams, our very best businesses do more with less."' },
+  { name: 'Earn Trust', desc: 'Listen, speak candidly, be vocally self-critical', tested: false,
+    meaning: 'NOT about being nice or social cohesion. It\'s about honesty: be authentic, straightforward, listen intently, challenge respectfully, deliver what you promised. If something isn\'t going well — own it, be self-critical, fix it. Use DATA to benchmark. Andy Jassy\'s story: wrong numbers on slide 10 of 220 in a Bezos presentation. Owned it, learned, improved.',
+    lookFor: 'Stories where you owned a mistake publicly, gave hard feedback, or built trust through transparency.',
+    mistake: 'Thinking it means never disagreeing. It means the opposite — honest, candid, respectful.',
+    quote: '"I earned trust by owning it, being vocally self-critical, and actually getting better."' },
+  { name: 'Dive Deep', desc: 'Stay connected to details, audit frequently, be skeptical', tested: true,
+    meaning: 'Amazon expects BOTH strategic AND detail-oriented. "So many people can fill whiteboards with ideas but can\'t get the details right." Narratives exist because "it is hard to fake details in a narrative." Follow anecdotes: at Amazon\'s scale, 0.5% = millions of people. Big metrics can look fine while individuals suffer. There IS tension with Think Big — Amazon wants you great at BOTH.',
+    lookFor: 'Stories where you went into details, found something others missed, followed an anecdote to discover a real problem hidden in aggregate metrics.',
+    mistake: 'Staying at the strategic level. "I delegated the details" is a Dive Deep failure.',
+    quote: '"The details of any idea are what matters most. That\'s what customers actually see."' },
+  { name: 'Have Backbone; Disagree and Commit', desc: 'Challenge decisions respectfully, then commit fully', tested: false,
+    meaning: 'You\'re EXPECTED to speak up, regardless of level. "I told you so" is completely useless — it\'s a failure either way (didn\'t speak up, or not committing). Social cohesion = compromising to get along. "10 ft vs 14 ft, compromise at 12 ft — but it\'s usually not 12 ft." Be truth-seeking, not peace-keeping. After the debate, FULLY commit even if you disagreed.',
+    lookFor: 'Stories where you challenged a decision with data, AND stories where you committed fully to a decision you disagreed with.',
+    mistake: 'Only telling the "disagree" part. Always include the "commit" part. Both matter.',
+    quote: '"I told you so is completely useless at Amazon because it\'s a failure one way or the other."' },
+  { name: 'Deliver Results', desc: 'Focus on key inputs, deliver with quality and timeliness', tested: false,
+    meaning: 'You can get everything else right — if you fail to deliver, none of it matters. Outputs (revenue, margin) vs Inputs (the initiatives that drive them). You can\'t manage outputs by staring at them — manage the INPUTS. "Launch is NOT the finish line. It\'s the starting line." Very few things become hits on day one. Launch, get feedback, iterate 7-8-9 times.',
+    lookFor: 'Stories with quantified outcomes AND what happened after launch — feedback, iteration, improvement.',
+    mistake: 'Ending the story at launch. Always describe what happened AFTER.',
+    quote: '"Launch or delivery is not the finish line. It\'s the starting line."' },
+  { name: 'Strive to be Earth\'s Best Employer', desc: 'Create safer, more productive work environment', tested: false,
+    meaning: 'What makes a great workplace: (1) mission that makes customers\' lives better, (2) at very large scale, (3) willingness to invent and invest long-term, (4) smart, passionate teammates. You can\'t be all things to all employees. Areas to improve: safety, manager quality, diversity.',
+    lookFor: 'Stories about making the workplace better — safety improvements, mentoring, process improvements for people.',
+    mistake: 'Interpreting too broadly. Focus on team safety, development, and inclusion.',
+    quote: '"Being willing to look at what customers care about and invent on their behalf is pretty inspiring."' },
+  { name: 'Success and Scale Bring Broad Responsibility', desc: 'Create more than you consume', tested: false,
+    meaning: 'Are the communities where we operate better off because we\'re there? If not, take action. Not just jobs — affordable housing ($1.8B), food security (10M+ meals), education (3.9M people), disaster relief (23M items). "Leaders create more than they consume."',
+    lookFor: 'Stories about considering broader impact — community, environment, future generations.',
+    mistake: 'Ignoring this LP entirely. Know it even if it\'s rarely asked directly.',
+    quote: '"We have to keep asking whether the communities in which we reside are better off because we\'re there."' },
+];
+
+function renderLPGrid(color, clickable) {
+  return LP_DATA.map(function(lp, i) {
     var borderColor = lp.tested ? color : 'var(--color-border)';
     var bgColor = lp.tested ? color + '15' : 'var(--color-bg)';
     var textColor = lp.tested ? color : 'var(--color-heading)';
     var star = lp.tested ? '&#9733; ' : '';
-    return '<div style="padding:10px 12px;border-radius:var(--radius-sm);border:1px solid ' + borderColor + ';background:' + bgColor + '">' +
-      '<div style="font-size:0.8rem;font-weight:700;color:' + textColor + '">' + star + lp.name + '</div>' +
+    var cursor = clickable ? 'cursor:pointer;' : '';
+    var onclick = clickable ? ' onclick="toggleLP(' + i + ')"' : '';
+    var detailId = 'lp-detail-' + i;
+    var detail = clickable ? '<div id="' + detailId + '" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border);font-size:0.75rem;line-height:1.6">' +
+      '<div style="color:var(--color-text);margin-bottom:6px"><strong style="color:' + textColor + '">What it really means:</strong> ' + lp.meaning + '</div>' +
+      '<div style="color:var(--color-text);margin-bottom:6px"><strong style="color:var(--color-success)">Interviewers look for:</strong> ' + lp.lookFor + '</div>' +
+      '<div style="color:var(--color-text);margin-bottom:6px"><strong style="color:var(--color-error)">Common mistake:</strong> ' + lp.mistake + '</div>' +
+      '<div style="color:' + color + ';font-style:italic">' + lp.quote + '</div>' +
+      '</div>' : '';
+    return '<div style="padding:10px 12px;border-radius:var(--radius-sm);border:1px solid ' + borderColor + ';background:' + bgColor + ';' + cursor + '"' + onclick + '>' +
+      '<div style="font-size:0.8rem;font-weight:700;color:' + textColor + '">' + star + lp.name + (clickable ? ' <span style="font-size:0.65rem;color:var(--color-text-muted)">&#9660;</span>' : '') + '</div>' +
       '<div style="font-size:0.7rem;color:var(--color-text-muted);margin-top:2px">' + lp.desc + '</div>' +
+      detail +
     '</div>';
   }).join('');
+}
+
+function toggleLP(idx) {
+  var el = document.getElementById('lp-detail-' + idx);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function renderPhoneScreenTab(el, co) {
@@ -155,34 +237,70 @@ function renderPhoneScreenTab(el, co) {
       <div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">${ps.tellMeAboutYourself}</div>
     </div>
 
-    <!-- STAR Method Quick Reference -->
+    <!-- STAR Method Deep Dive -->
     <div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">
-      <h3 style="color:var(--color-heading);margin-bottom:12px">The STAR Method</h3>
-      <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:14px">Amazon uses behavioral questions tied to Leadership Principles. Structure every answer with STAR:</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
-        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
-          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">S</div>
-          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Situation</div>
-          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">Set the scene in 2 sentences. What was happening? What was the challenge?</div>
+      <h3 style="color:var(--color-heading);margin-bottom:6px">The STAR Method</h3>
+      <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:14px">When Amazon asks "Tell me about a time when..." they want a complete story. STAR is a tool to organize your thoughts — not a rigid script. The interviewer will guide you and ask follow-ups.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:16px">
+        <div style="background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:4px solid ${co.color}">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="font-size:1.5rem;font-weight:900;color:${co.color};min-width:30px">S</div>
+            <div style="font-size:0.95rem;font-weight:700;color:var(--color-heading)">Situation</div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--color-text);line-height:1.6">Set the scene. Where were you working? What was going on? What made it challenging or interesting? <strong>Give just enough background</strong> so the interviewer understands the big picture — don't spend 2 minutes on context.</div>
+          <div style="margin-top:8px;font-size:0.75rem;color:var(--color-text-muted);font-style:italic">~15-20% of your answer (2-3 sentences)</div>
         </div>
-        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
-          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">T</div>
-          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Task</div>
-          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">1 sentence. What was YOUR goal or responsibility?</div>
+        <div style="background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:4px solid ${co.color}">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="font-size:1.5rem;font-weight:900;color:${co.color};min-width:30px">T</div>
+            <div style="font-size:0.95rem;font-weight:700;color:var(--color-heading)">Task</div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--color-text);line-height:1.6">What was YOUR goal? What were you responsible for? This helps the interviewer understand your specific role and what you were trying to achieve.</div>
+          <div style="margin-top:8px;font-size:0.75rem;color:var(--color-text-muted);font-style:italic">~5-10% of your answer (1 sentence)</div>
         </div>
-        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
-          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">A</div>
-          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Action</div>
-          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">60-70% of your answer. What did YOU specifically do? Say "I" not "we".</div>
+        <div style="background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:4px solid var(--color-success)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--color-success);min-width:30px">A</div>
+            <div style="font-size:0.95rem;font-weight:700;color:var(--color-heading)">Action <span style="font-size:0.7rem;color:var(--color-success)">(MOST IMPORTANT)</span></div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--color-text);line-height:1.6">Walk through what YOU did step by step. What was your approach? What decisions did you make? Use <strong>"I"</strong> not "we" — even if it was a team effort, the interviewer needs to assess YOUR contribution. This is where the interviewer learns how you think and problem-solve.</div>
+          <div style="margin-top:8px;font-size:0.75rem;color:var(--color-success);font-style:italic;font-weight:600">~60-70% of your answer (the bulk)</div>
         </div>
-        <div style="background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ${co.color}">
-          <div style="font-size:1.2rem;font-weight:900;color:${co.color}">R</div>
-          <div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">Result</div>
-          <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px">Quantified outcome + what you learned. Always include numbers.</div>
+        <div style="background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:4px solid ${co.color}">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="font-size:1.5rem;font-weight:900;color:${co.color};min-width:30px">R</div>
+            <div style="font-size:0.95rem;font-weight:700;color:var(--color-heading)">Result</div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--color-text);line-height:1.6">How did it turn out? Share what you accomplished — with <strong>numbers and specific outcomes</strong>. Then add what you <strong>learned</strong>. Not every story needs a success ending — failure stories are fine if you show what you learned and how you grew.</div>
+          <div style="margin-top:8px;font-size:0.75rem;color:var(--color-text-muted);font-style:italic">~15-20% of your answer (quantified + lesson)</div>
         </div>
       </div>
-      <div style="margin-top:12px;padding:10px 14px;background:${co.color}11;border-radius:var(--radius-sm);font-size:0.78rem;color:var(--color-text)">
-        <strong style="color:${co.color}">Target:</strong> 2-3 minutes per answer. Under 1 min = too shallow. Over 4 min = rambling. The interviewer will ask follow-ups to go deeper — that's a good sign.
+
+      <div style="background:${co.color}11;border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+        <div style="font-size:0.82rem;font-weight:700;color:${co.color};margin-bottom:8px">Key Tips from Amazon:</div>
+        <ul style="font-size:0.78rem;color:var(--color-text);line-height:1.7;padding-left:18px;margin:0">
+          <li><strong>Frame answers in relation to Leadership Principles</strong> — your stories should naturally demonstrate LPs</li>
+          <li><strong>Failure stories are welcome</strong> — "we know failure is part of innovation. What matters is what you learned"</li>
+          <li><strong>The interviewer will help guide you</strong> — they'll ask follow-ups to get the details they need</li>
+          <li><strong>Don't memorize scripts</strong> — know your stories well enough to tell them naturally</li>
+          <li><strong>Use "I" not "we"</strong> — even on team projects, be clear about YOUR specific contribution</li>
+        </ul>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border:1px solid var(--color-border)">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--color-success)">&#10003; Target: 2-3 minutes</div>
+          <div style="font-size:0.72rem;color:var(--color-text-muted)">Your initial answer. Then the interviewer probes deeper with 2-3 follow-ups.</div>
+        </div>
+        <div style="flex:1;min-width:200px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border:1px solid var(--color-border)">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--color-error)">&#10007; Under 1 minute</div>
+          <div style="font-size:0.72rem;color:var(--color-text-muted)">Too shallow. You're not giving enough detail for the interviewer to assess you.</div>
+        </div>
+        <div style="flex:1;min-width:200px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border:1px solid var(--color-border)">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--color-error)">&#10007; Over 4 minutes</div>
+          <div style="font-size:0.72rem;color:var(--color-text-muted)">Rambling. The interviewer needs time for follow-ups. Let them guide you deeper.</div>
+        </div>
       </div>
     </div>
 
@@ -191,7 +309,7 @@ function renderPhoneScreenTab(el, co) {
       <h3 style="color:var(--color-heading);margin-bottom:4px">Amazon's 16 Leadership Principles</h3>
       <p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">The 3 being tested in your phone screen are highlighted</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
-        ${renderLPGrid(co.color)}
+        ${renderLPGrid(co.color, true)}
       </div>
       <div style="margin-top:12px;font-size:0.75rem;color:var(--color-text-muted)">&#9733; = Being tested in your phone screen (Dive Deep, Dealing with Ambiguity maps to Bias for Action + Are Right A Lot)</div>
     </div>
@@ -337,6 +455,50 @@ function renderPhoneScreenTab(el, co) {
       </ul>
     </div>
   `;
+}
+
+function renderLPsTab(el, co) {
+  el.innerHTML = '<h3 style="color:var(--color-heading);margin-bottom:6px">Amazon\'s 16 Leadership Principles</h3>' +
+    '<p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px">Distilled from Andy Jassy\'s official LP videos. Click any principle to expand the full study notes: what it really means, what interviewers look for, common mistakes, and the key quote to remember.</p>' +
+    '<div style="display:grid;grid-template-columns:1fr;gap:10px">' +
+    LP_DATA.map(function(lp, i) {
+      var color = co.color;
+      var borderColor = lp.tested ? color : 'var(--color-border)';
+      var bgColor = lp.tested ? color + '15' : 'var(--color-bg-card)';
+      var textColor = lp.tested ? color : 'var(--color-heading)';
+      var star = lp.tested ? '&#9733; ' : '';
+      var badge = lp.tested ? ' <span style="background:' + color + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:0.65rem;font-weight:700;margin-left:6px">TESTED IN YOUR PHONE SCREEN</span>' : '';
+      return '<div style="padding:16px;border-radius:var(--radius-sm);border:1px solid ' + borderColor + ';background:' + bgColor + ';cursor:pointer" onclick="toggleLP(' + i + ')">' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<div style="min-width:28px;height:28px;background:' + color + '22;color:' + color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900">' + (i+1) + '</div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:0.9rem;font-weight:700;color:' + textColor + '">' + star + lp.name + badge + ' <span style="font-size:0.65rem;color:var(--color-text-muted)">&#9660;</span></div>' +
+            '<div style="font-size:0.78rem;color:var(--color-text-muted);margin-top:2px">' + lp.desc + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div id="lp-detail-' + i + '" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--color-border);font-size:0.82rem;line-height:1.7">' +
+          '<div style="color:var(--color-text);margin-bottom:10px"><strong style="color:' + textColor + '">What it really means:</strong><br>' + lp.meaning + '</div>' +
+          '<div style="color:var(--color-text);margin-bottom:10px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid var(--color-success)"><strong style="color:var(--color-success)">What interviewers look for:</strong><br>' + lp.lookFor + '</div>' +
+          '<div style="color:var(--color-text);margin-bottom:10px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid var(--color-error)"><strong style="color:var(--color-error)">Common mistake:</strong><br>' + lp.mistake + '</div>' +
+          '<div style="color:' + color + ';font-style:italic;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid ' + color + '">' + lp.quote + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    '</div>' +
+    '<div style="margin-top:20px;background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px">' +
+      '<h4 style="color:var(--color-heading);margin-bottom:8px;font-size:0.85rem">Priority for Hardware Development Engineer</h4>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;font-size:0.78rem">' +
+        '<div style="padding:8px 12px;background:' + co.color + '22;border-radius:var(--radius-sm);color:' + co.color + ';font-weight:600">&#9733; TESTED: Dive Deep</div>' +
+        '<div style="padding:8px 12px;background:' + co.color + '22;border-radius:var(--radius-sm);color:' + co.color + ';font-weight:600">&#9733; TESTED: Bias for Action</div>' +
+        '<div style="padding:8px 12px;background:' + co.color + '22;border-radius:var(--radius-sm);color:' + co.color + ';font-weight:600">&#9733; TESTED: Are Right, A Lot</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">LIKELY: Ownership</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">LIKELY: Invent and Simplify</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">LIKELY: Deliver Results</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">POSSIBLE: Earn Trust</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">POSSIBLE: Have Backbone</div>' +
+        '<div style="padding:8px 12px;background:var(--color-bg);border-radius:var(--radius-sm);color:var(--color-text)">POSSIBLE: Frugality</div>' +
+      '</div>' +
+    '</div>';
 }
 
 function renderProcessTab(el, co) {
