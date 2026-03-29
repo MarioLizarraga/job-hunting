@@ -539,7 +539,7 @@ function renderQuestionsTab(el, co, companyKey) {
   el.innerHTML = filterHtml + `
     <div id="qa-list">
       ${co.questions.map((q, i) => {
-        const savedAnswer = coAnswers[i] || '';
+        const savedAnswer = coAnswers[i] || q.defaultAnswer || '';
         const hasContent = savedAnswer.trim().length > 0;
         return `
         <div class="qa-card" data-type="${q.type}">
