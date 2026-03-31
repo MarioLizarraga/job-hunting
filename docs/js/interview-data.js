@@ -281,6 +281,11 @@ const INTERVIEW_DATA = {
         'When a deployment doesn\'t go as planned, what does the investigation process look like? How autonomous is the engineer?',
         'What does the first 90 days look like for a new HDE on the team?',
         'How does the GRAS Hardware team collaborate with the broader Amazon Robotics teams?',
+        'What\'s the most common reason a vendor system fails to meet expectations once it hits a real warehouse environment?',
+        'How much of the role is evaluating existing equipment versus designing new solutions from scratch?',
+        'What\'s the biggest technical challenge the team is dealing with right now that you wish you had more bandwidth for?',
+        'When you\'re deciding between building something custom versus buying off-the-shelf, what usually tips the decision?',
+        'Is there a project on the team right now where someone with my kind of background — robotics, fixtures, sensor validation — would be useful on day one?',
       ],
       keyNumbers: [
         { metric: 'Test time reduction', value: '30→10 min (67%)', context: 'Robot arm vs manual' },
