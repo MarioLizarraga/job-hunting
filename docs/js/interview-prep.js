@@ -52,9 +52,10 @@ function openCompany(key) {
     </div>
 
     <div class="interview__tabs">
-      ${co.phoneScreen ? `<button class="interview__tab active" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success);font-weight:700">Phone Screen Prep</button>` : ''}
+      ${co.loopInterview ? `<button class="interview__tab active" onclick="showTab('${key}','loop',this)" style="color:var(--color-error);font-weight:700">Loop Interview Prep</button>` : ''}
+      ${co.phoneScreen ? `<button class="interview__tab ${co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success);font-weight:700">Phone Screen Prep</button>` : ''}
       ${key === 'amazon' ? `<button class="interview__tab" onclick="showTab('${key}','lps',this)" style="color:#FF9900">Leadership Principles</button>` : ''}
-      <button class="interview__tab ${co.phoneScreen ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
+      <button class="interview__tab ${co.phoneScreen || co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
       <button class="interview__tab" onclick="showTab('${key}','questions',this)">Questions & Answers</button>
       <button class="interview__tab" onclick="showTab('${key}','study',this)">Study Guide</button>
       <button class="interview__tab" onclick="showTab('${key}','values',this)">Values & Culture</button>
@@ -62,7 +63,7 @@ function openCompany(key) {
     <div id="interview-tab-content" class="interview__content"></div>
   `;
 
-  showTab(key, co.phoneScreen ? 'phonescreen' : 'process', detail.querySelector('.interview__tab'));
+  showTab(key, co.loopInterview ? 'loop' : co.phoneScreen ? 'phonescreen' : 'process', detail.querySelector('.interview__tab'));
 }
 
 function showTab(companyKey, tab, btn) {
@@ -74,6 +75,7 @@ function showTab(companyKey, tab, btn) {
   const co = INTERVIEW_DATA[companyKey];
 
   switch (tab) {
+    case 'loop': renderLoopInterviewTab(content, co); break;
     case 'phonescreen': renderPhoneScreenTab(content, co); break;
     case 'lps': renderLPsTab(content, co); break;
     case 'process': renderProcessTab(content, co); break;
@@ -192,6 +194,116 @@ function renderLPGrid(color, clickable) {
 function toggleLP(idx) {
   var el = document.getElementById('lp-detail-' + idx);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderLoopInterviewTab(el, co) {
+  const loop = co.loopInterview;
+  if (!loop) { el.innerHTML = '<p>No loop interview scheduled.</p>'; return; }
+
+  const interviewDate = new Date(loop.date);
+  const now = new Date();
+  const daysUntil = Math.ceil((interviewDate - now) / (1000 * 60 * 60 * 24));
+  const dateStr = interviewDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const urgencyColor = daysUntil <= 2 ? 'var(--color-error)' : daysUntil <= 7 ? 'var(--color-warning)' : 'var(--color-success)';
+  const urgencyText = daysUntil <= 0 ? 'TODAY!' : daysUntil === 1 ? 'TOMORROW!' : daysUntil + ' days away';
+
+  var html = '';
+
+  // Countdown banner
+  html += '<div style="background:linear-gradient(135deg,' + co.color + '22,' + co.color + '11);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px;text-align:center">';
+  html += '<div style="font-size:2rem;font-weight:900;color:' + urgencyColor + '">' + urgencyText + '</div>';
+  html += '<div style="color:var(--color-heading);font-size:1.1rem;margin:4px 0">' + dateStr + '</div>';
+  html += '<div style="color:var(--color-text-muted);font-size:0.85rem">' + loop.duration + ' via ' + loop.platform + '</div>';
+  html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--color-text);line-height:1.6">' + loop.format + '</div>';
+  html += '</div>';
+
+  // What to Expect
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">What to Expect</h3>';
+  loop.whatToExpect.forEach(function(round) {
+    html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html += '<h4 style="color:var(--color-heading);margin:0">' + round.type + '</h4>';
+    html += '<span style="color:var(--color-text-muted);font-size:0.78rem">' + round.duration + '</span>';
+    html += '</div>';
+    html += '<p style="font-size:0.85rem;color:var(--color-text);line-height:1.6;margin-bottom:12px">' + round.description + '</p>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin:0">';
+    round.tips.forEach(function(tip) { html += '<li style="margin-bottom:4px">' + tip + '</li>'; });
+    html += '</ul></div>';
+  });
+
+  // Bluescape Section
+  var bs = loop.bluescape;
+  html += '<div style="background:var(--color-bg-card);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Bluescape Whiteboard — Setup & Features</h3>';
+  html += '<p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px">You MUST test this before interview day. Familiarize yourself with every tool below.</p>';
+
+  // Quick setup
+  html += '<div style="background:' + co.color + '11;border-radius:var(--radius-sm);padding:14px;margin-bottom:16px">';
+  html += '<div style="font-size:0.82rem;font-weight:700;color:' + co.color + ';margin-bottom:8px">Quick Setup</div>';
+  html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.8;padding-left:18px;margin:0">';
+  html += '<li><strong>Whiteboard link:</strong> <a href="' + bs.url + '" target="_blank" style="color:' + co.color + '">' + bs.url.substring(0, 60) + '...</a></li>';
+  html += '<li><strong>Browser:</strong> ' + bs.recommendedBrowser + '</li>';
+  html += '<li><strong>Backup plan:</strong> ' + bs.backupPlan + '</li>';
+  html += '</ul></div>';
+
+  // Features grid
+  html += '<h4 style="color:var(--color-heading);font-size:0.9rem;margin-bottom:12px">Tools & Features to Test</h4>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px">';
+  bs.features.forEach(function(feat) {
+    html += '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:16px">';
+    html += '<div style="font-size:1rem;margin-bottom:8px"><span style="margin-right:8px">' + feat.icon + '</span><strong style="color:var(--color-heading)">' + feat.name + '</strong></div>';
+    html += '<ol style="font-size:0.78rem;color:var(--color-text);line-height:1.7;padding-left:18px;margin:0">';
+    feat.steps.forEach(function(step) { html += '<li style="margin-bottom:3px">' + step + '</li>'; });
+    html += '</ol></div>';
+  });
+  html += '</div>';
+
+  // Practice exercise
+  var pe = bs.practiceExercise;
+  html += '<div style="background:var(--color-success)11;border:2px solid var(--color-success);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h4 style="color:var(--color-success);margin-bottom:4px">' + pe.title + '</h4>';
+  html += '<p style="font-size:0.82rem;color:var(--color-text);margin-bottom:12px">' + pe.description + '</p>';
+  html += '<ol style="font-size:0.82rem;color:var(--color-text);line-height:1.8;padding-left:20px;margin:0">';
+  pe.steps.forEach(function(step) { html += '<li style="margin-bottom:4px">' + step + '</li>'; });
+  html += '</ol></div>';
+
+  html += '</div>'; // end bluescape section
+
+  // Checklist
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Preparation Checklist</h3>';
+
+  var checklistSections = [
+    { title: '2+ Days Before (by Friday April 18)', items: loop.checklist.twoDaysBefore },
+    { title: 'Night Before (Saturday April 19)', items: loop.checklist.nightBefore },
+    { title: 'Morning Of (Sunday April 20)', items: loop.checklist.dayOf },
+    { title: 'During the Interview', items: loop.checklist.duringInterview },
+  ];
+
+  checklistSections.forEach(function(section) {
+    html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:16px 0 8px">' + section.title + '</h4>';
+    section.items.forEach(function(item) {
+      html += '<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.82rem;color:var(--color-text);cursor:pointer">';
+      html += '<input type="checkbox" style="accent-color:' + co.color + '"> ' + item;
+      html += '</label>';
+    });
+  });
+  html += '</div>';
+
+  // Critical Reminders
+  html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
+  html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
+  html += '<ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">';
+  html += '<li><strong>One interviewer is the Bar Raiser</strong> — an independent evaluator with veto power. Treat every round equally seriously.</li>';
+  html += '<li><strong>Each interviewer tests different LPs</strong> — you may need to tell the same story with different emphasis.</li>';
+  html += '<li><strong>The design session uses Bluescape</strong> — if you haven\'t tested it, do it NOW.</li>';
+  html += '<li><strong>Talk out loud during whiteboarding</strong> — they evaluate your process, not just the final drawing.</li>';
+  html += '<li><strong>Do NOT use GenAI during the interview</strong> — they explicitly warned. Answers must be from memory.</li>';
+  html += '<li><strong>Use "I" not "we"</strong> — even on team projects, be clear about YOUR specific contribution.</li>';
+  html += '<li><strong>This is a full day</strong> — pace yourself. Use breaks to hydrate, stretch, and reset.</li>';
+  html += '</ul></div>';
+
+  el.innerHTML = html;
 }
 
 function renderPhoneScreenTab(el, co) {
