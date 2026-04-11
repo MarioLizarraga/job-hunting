@@ -199,6 +199,30 @@ function toggleLP(idx) {
 }
 
 
+function formatStarAnswer(answer, color) {
+  if (!answer) return '';
+  var parts = answer.split('\n\n');
+  var html = '';
+  parts.forEach(function(part) {
+    var trimmed = part.trim();
+    if (!trimmed) return;
+    var starMatch = trimmed.match(/^(S|T|A|R):\s*/);
+    if (starMatch) {
+      var label = starMatch[1];
+      var rest = trimmed.substring(starMatch[0].length);
+      var labelColor = label === 'A' ? 'var(--color-success)' : color;
+      var labelBg = label === 'A' ? 'var(--color-success)' : color;
+      html += '<div style="margin-bottom:10px">';
+      html += '<span style="display:inline-block;background:' + labelBg + ';color:#fff;padding:1px 8px;border-radius:4px;font-size:0.72rem;font-weight:900;margin-right:8px;vertical-align:top">' + label + '</span>';
+      html += '<span style="font-size:0.82rem;color:var(--color-text);line-height:1.7">' + rest + '</span>';
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:0.82rem;color:var(--color-text);line-height:1.7;margin-bottom:10px">' + trimmed + '</div>';
+    }
+  });
+  return html;
+}
+
 function renderLoopInterviewTab(el, co) {
   var loop = co.loopInterview;
   if (!loop) { el.innerHTML = '<p>No loop interview scheduled.</p>'; return; }
@@ -284,18 +308,30 @@ function renderLoopInterviewTab(el, co) {
   html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
   html += '<h3 style="color:var(--color-heading);margin-bottom:4px">9 Leadership Principles Being Tested</h3>';
   html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Click to expand study notes. 7 LPs are NOT being covered (grayed out below).</p>';
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:12px">';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">';
   if (typeof LP_DATA !== 'undefined') {
     LP_DATA.forEach(function(lp) {
       var isTested = loop.lpsBeingTested.indexOf(lp.name) !== -1;
       if (isTested) {
-        html += '<details style="background:' + co.color + '11;border:1px solid ' + co.color + '44;border-radius:var(--radius-sm);padding:10px">';
-        html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:700;color:' + co.color + '">' + lp.name + '</summary>';
-        html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text);line-height:1.6">';
-        html += '<div style="margin-bottom:6px"><strong>Meaning:</strong> ' + lp.meaning + '</div>';
-        html += '<div style="margin-bottom:6px"><strong>They look for:</strong> ' + lp.lookFor + '</div>';
-        if (lp.mistake) html += '<div style="margin-bottom:6px;color:var(--color-error)"><strong>Common mistake:</strong> ' + lp.mistake + '</div>';
-        if (lp.quote) html += '<div style="font-style:italic;color:var(--color-text-muted)">' + lp.quote + '</div>';
+        html += '<details style="background:' + co.color + '11;border:1px solid ' + co.color + '44;border-radius:var(--radius-sm);padding:12px 14px">';
+        html += '<summary style="cursor:pointer;font-size:0.88rem;font-weight:700;color:' + co.color + '">' + lp.name + ' <span style="font-size:0.75rem;font-weight:400;color:var(--color-text-muted)">&mdash; ' + lp.desc + '</span></summary>';
+        html += '<div style="margin-top:12px;font-size:0.82rem;color:var(--color-text);line-height:1.7">';
+        html += '<div style="margin-bottom:8px"><strong style="color:' + co.color + '">What it really means:</strong> ' + lp.meaning + '</div>';
+        html += '<div style="margin-bottom:8px"><strong style="color:var(--color-success)">Interviewers look for:</strong> ' + lp.lookFor + '</div>';
+        if (lp.mistake) html += '<div style="margin-bottom:8px"><strong style="color:var(--color-error)">Common mistake:</strong> ' + lp.mistake + '</div>';
+        if (lp.quote) html += '<div style="font-style:italic;color:var(--color-text-muted);margin-bottom:8px">' + lp.quote + '</div>';
+        // LP-specific questions if available
+        if (loop.lpQuestions && loop.lpQuestions[lp.name] && loop.lpQuestions[lp.name].length) {
+          html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid ' + co.color + '33">';
+          html += '<div style="font-size:0.78rem;font-weight:700;color:' + co.color + ';margin-bottom:8px">Prepared Questions & Answers:</div>';
+          loop.lpQuestions[lp.name].forEach(function(q) {
+            html += '<details style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px;background:var(--color-bg);border-left:3px solid ' + co.color + '">';
+            html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
+            html += '<div style="margin-top:10px;padding:14px;background:var(--color-bg-card);border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
+            html += '</details>';
+          });
+          html += '</div>';
+        }
         html += '</div></details>';
       }
     });
@@ -319,10 +355,24 @@ function renderLoopInterviewTab(el, co) {
     html += '<div style="font-size:0.78rem;color:var(--color-text-muted);font-style:italic">' + fc.description + '</div>';
     html += '</div></div>';
 
+    if (fc.grasContext) {
+      html += '<div style="background:' + co.color + '11;border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;border-left:3px solid ' + co.color + '">';
+      html += '<div style="font-size:0.75rem;font-weight:700;color:' + co.color + ';margin-bottom:4px">How Amazon GRAS Uses This:</div>';
+      html += '<div style="font-size:0.82rem;color:var(--color-text);line-height:1.6">' + fc.grasContext + '</div>';
+      html += '</div>';
+    }
+
     html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">What They Evaluate:</h4>';
-    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin-bottom:14px">';
-    fc.whatTheyEvaluate.forEach(function(w) { html += '<li>' + w + '</li>'; });
-    html += '</ul>';
+    html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">';
+    fc.whatTheyEvaluate.forEach(function(w) {
+      var hasQuestion = w.indexOf('?') !== -1;
+      var tip = hasQuestion ? 'Prepare a specific STAR example that demonstrates this.' : 'Think of a time when you demonstrated this quality.';
+      html += '<details style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:8px 12px;background:var(--color-bg)">';
+      html += '<summary style="cursor:pointer;font-size:0.82rem;color:var(--color-text)">' + w + '</summary>';
+      html += '<div style="margin-top:6px;font-size:0.78rem;color:var(--color-text-muted);font-style:italic;padding-left:8px;border-left:2px solid var(--color-success)">' + tip + '</div>';
+      html += '</details>';
+    });
+    html += '</div>';
 
     html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">Your Key Talking Points:</h4>';
     html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:16px;margin-bottom:14px;border-left:3px solid var(--color-success)">';
@@ -333,7 +383,7 @@ function renderLoopInterviewTab(el, co) {
     fc.questions.forEach(function(q) {
       html += '<details style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid ' + co.color + '">';
       html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
-      html += '<div style="margin-top:10px;font-size:0.82rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm)">' + q.answer + '</div>';
+      html += '<div style="margin-top:10px;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
       html += '</details>';
     });
 
