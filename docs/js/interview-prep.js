@@ -201,25 +201,24 @@ function toggleLP(idx) {
 
 function formatStarAnswer(answer, color) {
   if (!answer) return '';
-  var parts = answer.split('\n\n');
-  var html = '';
-  parts.forEach(function(part) {
-    var trimmed = part.trim();
+  // Split on STAR labels while keeping them — handles both \n\nS: and mid-flow S: patterns
+  var segments = answer.split(/(?=\b[STAR]:\s)/);
+  var html = '<div style="font-size:0.82rem;color:var(--color-text);line-height:1.8">';
+  segments.forEach(function(seg) {
+    var trimmed = seg.replace(/^\n+/, '').trim();
     if (!trimmed) return;
-    var starMatch = trimmed.match(/^(S|T|A|R):\s*/);
+    var starMatch = trimmed.match(/^([STAR]):\s*/);
     if (starMatch) {
       var label = starMatch[1];
       var rest = trimmed.substring(starMatch[0].length);
-      var labelColor = label === 'A' ? 'var(--color-success)' : color;
       var labelBg = label === 'A' ? 'var(--color-success)' : color;
-      html += '<div style="margin-bottom:10px">';
-      html += '<span style="display:inline-block;background:' + labelBg + ';color:#fff;padding:1px 8px;border-radius:4px;font-size:0.72rem;font-weight:900;margin-right:8px;vertical-align:top">' + label + '</span>';
-      html += '<span style="font-size:0.82rem;color:var(--color-text);line-height:1.7">' + rest + '</span>';
-      html += '</div>';
+      // Inline pill label flowing with text — no block breaks
+      html += ' <span style="display:inline-block;background:' + labelBg + ';color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin:0 4px 0 2px;vertical-align:middle;line-height:1.6">' + label + '</span>' + rest;
     } else {
-      html += '<div style="font-size:0.82rem;color:var(--color-text);line-height:1.7;margin-bottom:10px">' + trimmed + '</div>';
+      html += ' ' + trimmed;
     }
   });
+  html += '</div>';
   return html;
 }
 
