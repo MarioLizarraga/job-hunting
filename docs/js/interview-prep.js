@@ -53,7 +53,8 @@ function openCompany(key) {
 
     <div class="interview__tabs">
       ${co.loopInterview ? `<button class="interview__tab active" onclick="showTab('${key}','loop',this)" style="color:var(--color-error);font-weight:700">Loop Interview Prep</button>` : ''}
-      ${co.phoneScreen ? `<button class="interview__tab ${co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success);font-weight:700">Phone Screen Prep</button>` : ''}
+      ${co.loopInterview?.bluescape ? `<button class="interview__tab" onclick="showTab('${key}','bluescape',this)" style="color:#0078D4">Bluescape Guide</button>` : ''}
+      ${co.phoneScreen ? `<button class="interview__tab ${co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success)">Phone Screen Prep</button>` : ''}
       ${key === 'amazon' ? `<button class="interview__tab" onclick="showTab('${key}','lps',this)" style="color:#FF9900">Leadership Principles</button>` : ''}
       <button class="interview__tab ${co.phoneScreen || co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
       <button class="interview__tab" onclick="showTab('${key}','questions',this)">Questions & Answers</button>
@@ -76,6 +77,7 @@ function showTab(companyKey, tab, btn) {
 
   switch (tab) {
     case 'loop': renderLoopInterviewTab(content, co); break;
+    case 'bluescape': renderBluescapeTab(content, co); break;
     case 'phonescreen': renderPhoneScreenTab(content, co); break;
     case 'lps': renderLPsTab(content, co); break;
     case 'process': renderProcessTab(content, co); break;
@@ -196,16 +198,20 @@ function toggleLP(idx) {
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
+
 function renderLoopInterviewTab(el, co) {
-  const loop = co.loopInterview;
+  var loop = co.loopInterview;
   if (!loop) { el.innerHTML = '<p>No loop interview scheduled.</p>'; return; }
 
-  const interviewDate = new Date(loop.date);
-  const now = new Date();
-  const daysUntil = Math.ceil((interviewDate - now) / (1000 * 60 * 60 * 24));
-  const dateStr = interviewDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const urgencyColor = daysUntil <= 2 ? 'var(--color-error)' : daysUntil <= 7 ? 'var(--color-warning)' : 'var(--color-success)';
-  const urgencyText = daysUntil <= 0 ? 'TODAY!' : daysUntil === 1 ? 'TOMORROW!' : daysUntil + ' days away';
+  var interviewDate = new Date(loop.date);
+  var debriefDate = new Date(loop.debriefDate);
+  var now = new Date();
+  var daysUntil = Math.ceil((interviewDate - now) / (1000 * 60 * 60 * 24));
+  var daysUntilDebrief = Math.ceil((debriefDate - now) / (1000 * 60 * 60 * 24));
+  var dateStr = interviewDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  var debriefStr = debriefDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  var urgencyColor = daysUntil <= 2 ? 'var(--color-error)' : daysUntil <= 7 ? 'var(--color-warning)' : 'var(--color-success)';
+  var urgencyText = daysUntil <= 0 ? 'TODAY!' : daysUntil === 1 ? 'TOMORROW!' : daysUntil + ' days away';
 
   var html = '';
 
@@ -215,33 +221,235 @@ function renderLoopInterviewTab(el, co) {
   html += '<div style="color:var(--color-heading);font-size:1.1rem;margin:4px 0">' + dateStr + '</div>';
   html += '<div style="color:var(--color-text-muted);font-size:0.85rem">' + loop.duration + ' via ' + loop.platform + '</div>';
   html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--color-text);line-height:1.6">' + loop.format + '</div>';
+  html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text-muted)">' + loop.zoomNote + '</div>';
+  html += '<div style="margin-top:12px;padding:8px 16px;background:var(--color-bg);border-radius:var(--radius-sm);display:inline-block;font-size:0.8rem;color:var(--color-text-muted)">Debrief: ' + debriefStr + ' (after 11 AM PT) &mdash; ' + (daysUntilDebrief <= 0 ? 'TODAY' : daysUntilDebrief + ' days') + '</div>';
   html += '</div>';
 
-  // What to Expect
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">What to Expect</h3>';
-  loop.whatToExpect.forEach(function(round) {
+  // Day Schedule
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Your Day Schedule</h3>';
+  loop.schedule.forEach(function(slot) {
+    var isInterview = slot.type === 'interview';
+    var isAffinity = slot.type === 'affinity';
+    var bg = isInterview ? co.color + '11' : isAffinity ? '#9C27B022' : 'var(--color-bg)';
+    var border = isInterview ? co.color : isAffinity ? '#9C27B0' : 'var(--color-border)';
+    var labelColor = isInterview ? co.color : isAffinity ? '#9C27B0' : 'var(--color-text-muted)';
+    html += '<div style="display:flex;gap:16px;margin-bottom:8px;padding:12px;background:' + bg + ';border-radius:var(--radius-sm);border-left:3px solid ' + border + '">';
+    html += '<div style="min-width:150px;font-size:0.82rem;font-weight:700;color:' + labelColor + '">' + slot.time + '</div>';
+    html += '<div style="flex:1">';
+    html += '<div style="font-size:0.85rem;font-weight:' + (isInterview ? '700' : '400') + ';color:var(--color-heading)">' + slot.label + '</div>';
+    if (slot.topics) html += '<div style="font-size:0.75rem;color:' + co.color + ';margin-top:2px">' + slot.topics + '</div>';
+    if (slot.note) html += '<div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:2px;font-style:italic">' + slot.note + '</div>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  // Tell Me About Yourself (short)
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Tell Me About Yourself" (90 sec max)</h3>';
+  html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">' + loop.tellMeAboutYourself + '</div>';
+  html += '</div>';
+
+  // Why Amazon (short)
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Why Amazon? Why This Role?"</h3>';
+  html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">' + loop.whyAmazon + '</div>';
+  html += '</div>';
+
+  // Interview Breakdown
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Interview Topic Breakdown</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:12px">Each interviewer covers 3 topics. The FCs and LPs from Courtney\'s email may correspond to interviewer order.</p>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">';
+  var breakdowns = [
+    { label: 'Interview 1', lp: 1, fc: 2 },
+    { label: 'Interview 2', lp: 2, fc: 1 },
+    { label: 'Interview 3', lp: 3, fc: 0 },
+    { label: 'Interview 4', lp: 2, fc: 1 },
+    { label: 'Int. 5 (Stephen)', lp: 1, fc: 2 },
+  ];
+  breakdowns.forEach(function(b) {
+    html += '<div style="background:var(--color-bg);padding:12px;border-radius:var(--radius-sm);border:1px solid var(--color-border);text-align:center">';
+    html += '<div style="font-size:0.82rem;font-weight:700;color:var(--color-heading)">' + b.label + '</div>';
+    html += '<div style="margin-top:6px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap">';
+    for (var i = 0; i < b.lp; i++) html += '<span style="background:' + co.color + ';color:#fff;padding:2px 6px;border-radius:4px;font-size:0.7rem">LP</span>';
+    for (var j = 0; j < b.fc; j++) html += '<span style="background:var(--color-success);color:#fff;padding:2px 6px;border-radius:4px;font-size:0.7rem">FC</span>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  html += '<div style="margin-top:8px;font-size:0.72rem;color:var(--color-text-muted)">Total: 9 LPs + 6 FCs = 15 topics across 5 interviewers</div>';
+  html += '</div>';
+
+  // Leadership Principles Being Tested
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">9 Leadership Principles Being Tested</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Click to expand study notes. 7 LPs are NOT being covered (grayed out below).</p>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:12px">';
+  if (typeof LP_DATA !== 'undefined') {
+    LP_DATA.forEach(function(lp) {
+      var isTested = loop.lpsBeingTested.indexOf(lp.name) !== -1;
+      if (isTested) {
+        html += '<details style="background:' + co.color + '11;border:1px solid ' + co.color + '44;border-radius:var(--radius-sm);padding:10px">';
+        html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:700;color:' + co.color + '">' + lp.name + '</summary>';
+        html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text);line-height:1.6">';
+        html += '<div style="margin-bottom:6px"><strong>Meaning:</strong> ' + lp.meaning + '</div>';
+        html += '<div style="margin-bottom:6px"><strong>They look for:</strong> ' + lp.lookFor + '</div>';
+        if (lp.mistake) html += '<div style="margin-bottom:6px;color:var(--color-error)"><strong>Common mistake:</strong> ' + lp.mistake + '</div>';
+        if (lp.quote) html += '<div style="font-style:italic;color:var(--color-text-muted)">' + lp.quote + '</div>';
+        html += '</div></details>';
+      }
+    });
+  }
+  html += '</div>';
+  html += '<div style="font-size:0.75rem;color:var(--color-text-muted);margin-bottom:8px"><strong>NOT being covered:</strong></div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  loop.lpsNotCovered.forEach(function(lp) {
+    html += '<span style="background:var(--color-bg);color:var(--color-text-muted);padding:4px 10px;border-radius:4px;font-size:0.72rem;text-decoration:line-through">' + lp + '</span>';
+  });
+  html += '</div></div>';
+
+  // Functional Competencies
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">6 Functional Competencies</h3>';
+  loop.functionalCompetencies.forEach(function(fc, idx) {
     html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<h4 style="color:var(--color-heading);margin:0">' + round.type + '</h4>';
-    html += '<span style="color:var(--color-text-muted);font-size:0.78rem">' + round.duration + '</span>';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+    html += '<div style="background:var(--color-success);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem">' + (idx + 1) + '</div>';
+    html += '<div>';
+    html += '<div style="font-weight:700;color:var(--color-heading);font-size:1rem">' + fc.name + '</div>';
+    html += '<div style="font-size:0.78rem;color:var(--color-text-muted);font-style:italic">' + fc.description + '</div>';
+    html += '</div></div>';
+
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">What They Evaluate:</h4>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin-bottom:14px">';
+    fc.whatTheyEvaluate.forEach(function(w) { html += '<li>' + w + '</li>'; });
+    html += '</ul>';
+
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">Your Key Talking Points:</h4>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:16px;margin-bottom:14px;border-left:3px solid var(--color-success)">';
+    fc.keyTalkingPoints.forEach(function(tp) { html += '<li style="margin-bottom:4px">' + tp + '</li>'; });
+    html += '</ul>';
+
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:8px">Questions They Might Ask:</h4>';
+    fc.questions.forEach(function(q) {
+      html += '<details style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid ' + co.color + '">';
+      html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
+      html += '<div style="margin-top:10px;font-size:0.82rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm)">' + q.answer + '</div>';
+      html += '</details>';
+    });
+
+    if (fc.questionsToAsk && fc.questionsToAsk.length) {
+      html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin:12px 0 8px">Questions YOU Can Ask About This Topic:</h4>';
+      fc.questionsToAsk.forEach(function(q) {
+        html += '<div style="font-size:0.82rem;color:var(--color-text);margin-bottom:6px;padding-left:12px;border-left:2px solid var(--color-text-muted)">"' + q + '"</div>';
+      });
+    }
+
     html += '</div>';
-    html += '<p style="font-size:0.85rem;color:var(--color-text);line-height:1.6;margin-bottom:12px">' + round.description + '</p>';
-    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin:0">';
-    round.tips.forEach(function(tip) { html += '<li style="margin-bottom:4px">' + tip + '</li>'; });
-    html += '</ul></div>';
   });
 
-  // Bluescape Section
-  var bs = loop.bluescape;
+  // Strategy Tips from Courtney
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:12px">Strategy Tips (from Prep Call with Courtney)</h3>';
+  loop.strategyTips.forEach(function(t) {
+    html += '<div style="margin-bottom:10px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">';
+    html += '<div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">' + t.tip + '</div>';
+    html += '<div style="font-size:0.78rem;color:var(--color-text);margin-top:4px">' + t.detail + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Questions to Ask
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Questions to Ask Interviewers (pick 2-3 per session)</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">You have 15 min at the end of each interview. Mix practical + impressive questions. Also use the FC-specific questions above based on what was discussed.</p>';
+
+  html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:8px">Solid, Practical Questions:</h4>';
+  loop.questionsToAskGeneral.forEach(function(q, i) {
+    html += '<div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start">';
+    html += '<div style="min-width:24px;height:24px;background:' + co.color + '22;color:' + co.color + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700">' + (i + 1) + '</div>';
+    html += '<div><div style="font-size:0.85rem;color:var(--color-text);line-height:1.5">"' + q.q + '"</div>';
+    html += '<div style="font-size:0.72rem;color:var(--color-text-muted);margin-top:2px">' + q.context + '</div></div></div>';
+  });
+
+  html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin:16px 0 8px">Impressive Questions <span style="font-size:0.7rem;color:var(--color-success)">(show you THINK like an HDE)</span>:</h4>';
+  loop.questionsToAskImpressive.forEach(function(q) {
+    html += '<div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start">';
+    html += '<div style="min-width:24px;height:24px;background:var(--color-success)33;color:var(--color-success);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700">*</div>';
+    html += '<div><div style="font-size:0.85rem;color:var(--color-text);line-height:1.5">"' + q.q + '"</div>';
+    html += '<div style="font-size:0.72rem;color:var(--color-success);margin-top:2px">' + q.context + '</div></div></div>';
+  });
+  html += '</div>';
+
+  // Key Numbers Cheat Sheet
   html += '<div style="background:var(--color-bg-card);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Bluescape Whiteboard — Setup & Features</h3>';
-  html += '<p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px">You MUST test this before interview day. Familiarize yourself with every tool below.</p>';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Key Numbers Cheat Sheet</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Keep this visible during interviews. Glance when you need a specific number.</p>';
+  loop.keyNumbers.forEach(function(cat) {
+    html += '<h4 style="color:' + co.color + ';font-size:0.85rem;margin:14px 0 8px">' + cat.category + '</h4>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">';
+    cat.numbers.forEach(function(n) {
+      html += '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--color-bg);border-radius:var(--radius-sm);font-size:0.8rem">';
+      html += '<span style="color:var(--color-text)">' + n.label + '</span>';
+      html += '<span style="font-weight:700;color:' + co.color + '">' + n.value + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Checklist
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Preparation Checklist</h3>';
+  var checklistSections = [
+    { title: '2+ Days Before (by Friday April 18)', items: loop.checklist.twoDaysBefore },
+    { title: 'Night Before (Saturday April 19)', items: loop.checklist.nightBefore },
+    { title: 'Morning Of (Sunday April 20)', items: loop.checklist.dayOf },
+    { title: 'During the Interview', items: loop.checklist.duringInterview },
+  ];
+  checklistSections.forEach(function(section) {
+    html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:16px 0 8px">' + section.title + '</h4>';
+    section.items.forEach(function(item) {
+      html += '<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.82rem;color:var(--color-text);cursor:pointer">';
+      html += '<input type="checkbox" style="accent-color:' + co.color + '"> ' + item;
+      html += '</label>';
+    });
+  });
+  html += '</div>';
+
+  // Critical Reminders
+  html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
+  html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
+  html += '<ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">';
+  html += '<li><strong>One interviewer is the Bar Raiser</strong> &mdash; independent evaluator from another team with veto power. Treat every round equally.</li>';
+  html += '<li><strong>Don\'t repeat the same story more than twice</strong> &mdash; show your range across different projects.</li>';
+  html += '<li><strong>Each interviewer has 3 assigned topics</strong> &mdash; listen for whether they\'re asking LP behavioral or FC technical questions.</li>';
+  html += '<li><strong>Design session uses Bluescape</strong> &mdash; test it beforehand (see Bluescape Guide tab).</li>';
+  html += '<li><strong>Talk out loud during whiteboarding</strong> &mdash; they evaluate your process, not just the final drawing.</li>';
+  html += '<li><strong>Do NOT use GenAI during the interview</strong> &mdash; they explicitly warned. Failure to comply = disqualification.</li>';
+  html += '<li><strong>Use "I" not "we"</strong> &mdash; even on team projects, be clear about YOUR individual contributions.</li>';
+  html += '<li><strong>Disconnect between sessions</strong> &mdash; during breaks, drop from Zoom and reconnect for the next interviewer.</li>';
+  html += '<li><strong>This is a full day (9 AM &ndash; 4:30 PM)</strong> &mdash; pace yourself. Eat during breaks. Stay hydrated. Reset your energy.</li>';
+  html += '<li><strong>Debrief is Wednesday April 22</strong> &mdash; Courtney will schedule a call (after 11 AM PT). Expect results within 5 business days.</li>';
+  html += '</ul></div>';
+
+  el.innerHTML = html;
+}
+
+function renderBluescapeTab(el, co) {
+  var bs = co.loopInterview && co.loopInterview.bluescape;
+  if (!bs) { el.innerHTML = '<p>No Bluescape data available.</p>'; return; }
+
+  var html = '';
+
+  html += '<div style="background:var(--color-bg-card);border:2px solid #0078D4;border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Bluescape Whiteboard &mdash; Setup & Features</h3>';
+  html += '<p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px">You MUST test this before interview day. The design session will use this tool.</p>';
 
   // Quick setup
-  html += '<div style="background:' + co.color + '11;border-radius:var(--radius-sm);padding:14px;margin-bottom:16px">';
-  html += '<div style="font-size:0.82rem;font-weight:700;color:' + co.color + ';margin-bottom:8px">Quick Setup</div>';
+  html += '<div style="background:#0078D411;border-radius:var(--radius-sm);padding:14px;margin-bottom:16px">';
+  html += '<div style="font-size:0.82rem;font-weight:700;color:#0078D4;margin-bottom:8px">Quick Setup</div>';
   html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.8;padding-left:18px;margin:0">';
-  html += '<li><strong>Whiteboard link:</strong> <a href="' + bs.url + '" target="_blank" style="color:' + co.color + '">' + bs.url.substring(0, 60) + '...</a></li>';
+  html += '<li><strong>Whiteboard link:</strong> <a href="' + bs.url + '" target="_blank" style="color:#0078D4">Open Bluescape Whiteboard</a></li>';
   html += '<li><strong>Browser:</strong> ' + bs.recommendedBrowser + '</li>';
   html += '<li><strong>Backup plan:</strong> ' + bs.backupPlan + '</li>';
   html += '</ul></div>';
@@ -267,45 +475,23 @@ function renderLoopInterviewTab(el, co) {
   pe.steps.forEach(function(step) { html += '<li style="margin-bottom:4px">' + step + '</li>'; });
   html += '</ol></div>';
 
-  html += '</div>'; // end bluescape section
-
-  // Checklist
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Preparation Checklist</h3>';
-
-  var checklistSections = [
-    { title: '2+ Days Before (by Friday April 18)', items: loop.checklist.twoDaysBefore },
-    { title: 'Night Before (Saturday April 19)', items: loop.checklist.nightBefore },
-    { title: 'Morning Of (Sunday April 20)', items: loop.checklist.dayOf },
-    { title: 'During the Interview', items: loop.checklist.duringInterview },
-  ];
-
-  checklistSections.forEach(function(section) {
-    html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:16px 0 8px">' + section.title + '</h4>';
-    section.items.forEach(function(item) {
-      html += '<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.82rem;color:var(--color-text);cursor:pointer">';
-      html += '<input type="checkbox" style="accent-color:' + co.color + '"> ' + item;
-      html += '</label>';
-    });
-  });
-  html += '</div>';
-
-  // Critical Reminders
-  html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
-  html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
-  html += '<ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">';
-  html += '<li><strong>One interviewer is the Bar Raiser</strong> — an independent evaluator with veto power. Treat every round equally seriously.</li>';
-  html += '<li><strong>Each interviewer tests different LPs</strong> — you may need to tell the same story with different emphasis.</li>';
-  html += '<li><strong>The design session uses Bluescape</strong> — if you haven\'t tested it, do it NOW.</li>';
-  html += '<li><strong>Talk out loud during whiteboarding</strong> — they evaluate your process, not just the final drawing.</li>';
-  html += '<li><strong>Do NOT use GenAI during the interview</strong> — they explicitly warned. Answers must be from memory.</li>';
-  html += '<li><strong>Use "I" not "we"</strong> — even on team projects, be clear about YOUR specific contribution.</li>';
-  html += '<li><strong>This is a full day</strong> — pace yourself. Use breaks to hydrate, stretch, and reset.</li>';
+  // Design session tips
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px">';
+  html += '<h4 style="color:var(--color-heading);margin-bottom:10px">Design Session Tips</h4>';
+  html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px">';
+  html += '<li><strong>Start by asking clarifying questions</strong> &mdash; "What are the constraints? Throughput? Environment? Temperature zones?"</li>';
+  html += '<li><strong>Talk out loud while drawing</strong> &mdash; they need to hear your reasoning, not just see the result</li>';
+  html += '<li><strong>Start with a high-level block diagram</strong> before going into detail</li>';
+  html += '<li><strong>Call out trade-offs explicitly</strong> &mdash; "I\'m choosing rollers over belts because..."</li>';
+  html += '<li><strong>Draw big and label everything</strong> &mdash; small unlabeled sketches are hard to evaluate</li>';
+  html += '<li><strong>Budget your time</strong> &mdash; ~10 min requirements, ~30 min design + drawing, ~10 min discussion, ~10 min buffer</li>';
+  html += '<li><strong>It\'s OK to say</strong> "In practice I\'d prototype and test this, but my initial approach would be..."</li>';
   html += '</ul></div>';
+
+  html += '</div>';
 
   el.innerHTML = html;
 }
-
 function renderPhoneScreenTab(el, co) {
   const ps = co.phoneScreen;
   if (!ps) { el.innerHTML = '<p>No phone screen scheduled.</p>'; return; }
@@ -560,7 +746,7 @@ function renderPhoneScreenTab(el, co) {
       <ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">
         <li><strong>Stephen is the HIRING MANAGER</strong> — not just a screener. He decides if you join his team.</li>
         <li><strong>He builds data pipelines and dashboards</strong> — your monitoring platform story will resonate deeply.</li>
-        <li><strong>"Skeptically review vendor assertions"</strong> — this is their #1 job. Your FUTEK validation story IS the job.</li>
+        <li><strong>"Skeptically review vendor assertions"</strong> — this is their #1 job. Your UFactory golden button validation story IS the job.</li>
         <li><strong>Do NOT use GenAI during the interview</strong> — they explicitly warned. Answers must be from memory.</li>
         <li><strong>Use "I" not "we"</strong> — Amazon wants YOUR individual contributions.</li>
         <li><strong>Expect 3-4 questions total</strong> — each with 2-3 follow-ups. Quality over quantity.</li>
