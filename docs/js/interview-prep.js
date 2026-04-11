@@ -306,33 +306,35 @@ function renderLoopInterviewTab(el, co) {
   // Leadership Principles Being Tested
   html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
   html += '<h3 style="color:var(--color-heading);margin-bottom:4px">9 Leadership Principles Being Tested</h3>';
-  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Click to expand study notes. 7 LPs are NOT being covered (grayed out below).</p>';
-  html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Title expands study notes. Questions expand answers independently. Use during interviews to quickly find relevant questions.</p>';
+  html += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">';
   if (typeof LP_DATA !== 'undefined') {
     LP_DATA.forEach(function(lp) {
       var isTested = loop.lpsBeingTested.indexOf(lp.name) !== -1;
-      if (isTested) {
-        html += '<details style="background:' + co.color + '11;border:1px solid ' + co.color + '44;border-radius:var(--radius-sm);padding:12px 14px">';
-        html += '<summary style="cursor:pointer;font-size:0.88rem;font-weight:700;color:' + co.color + '">' + lp.name + ' <span style="font-size:0.75rem;font-weight:400;color:var(--color-text-muted)">&mdash; ' + lp.desc + '</span></summary>';
-        html += '<div style="margin-top:12px;font-size:0.82rem;color:var(--color-text);line-height:1.7">';
-        html += '<div style="margin-bottom:8px"><strong style="color:' + co.color + '">What it really means:</strong> ' + lp.meaning + '</div>';
-        html += '<div style="margin-bottom:8px"><strong style="color:var(--color-success)">Interviewers look for:</strong> ' + lp.lookFor + '</div>';
-        if (lp.mistake) html += '<div style="margin-bottom:8px"><strong style="color:var(--color-error)">Common mistake:</strong> ' + lp.mistake + '</div>';
-        if (lp.quote) html += '<div style="font-style:italic;color:var(--color-text-muted);margin-bottom:8px">' + lp.quote + '</div>';
-        // LP-specific questions if available
-        if (loop.lpQuestions && loop.lpQuestions[lp.name] && loop.lpQuestions[lp.name].length) {
-          html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid ' + co.color + '33">';
-          html += '<div style="font-size:0.78rem;font-weight:700;color:' + co.color + ';margin-bottom:8px">Prepared Questions & Answers:</div>';
-          loop.lpQuestions[lp.name].forEach(function(q) {
-            html += '<details style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px;background:var(--color-bg);border-left:3px solid ' + co.color + '">';
-            html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
-            html += '<div style="margin-top:10px;padding:14px;background:var(--color-bg-card);border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
-            html += '</details>';
-          });
-          html += '</div>';
-        }
-        html += '</div></details>';
+      if (!isTested) return;
+      var lpQs = (loop.lpQuestions && loop.lpQuestions[lp.name]) || [];
+      html += '<div style="background:' + co.color + '11;border:1px solid ' + co.color + '44;border-radius:var(--radius-sm);padding:14px">';
+      // LP title — clickable to expand study notes
+      html += '<details>';
+      html += '<summary style="cursor:pointer;font-size:0.88rem;font-weight:700;color:' + co.color + '">' + lp.name + ' <span style="font-size:0.75rem;font-weight:400;color:var(--color-text-muted)">&mdash; ' + lp.desc + ' <span style="font-size:0.65rem;color:var(--color-text-muted)">(click for study notes)</span></span></summary>';
+      html += '<div style="margin-top:10px;font-size:0.82rem;color:var(--color-text);line-height:1.7;padding:12px;background:var(--color-bg);border-radius:var(--radius-sm)">';
+      html += '<div style="margin-bottom:6px"><strong style="color:' + co.color + '">What it means:</strong> ' + lp.meaning + '</div>';
+      html += '<div style="margin-bottom:6px"><strong style="color:var(--color-success)">They look for:</strong> ' + lp.lookFor + '</div>';
+      if (lp.mistake) html += '<div style="margin-bottom:6px"><strong style="color:var(--color-error)">Common mistake:</strong> ' + lp.mistake + '</div>';
+      if (lp.quote) html += '<div style="font-style:italic;color:var(--color-text-muted)">' + lp.quote + '</div>';
+      html += '</div></details>';
+      // Questions — always visible, individually expandable for answers
+      if (lpQs.length) {
+        html += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+        lpQs.forEach(function(q) {
+          html += '<details style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--color-bg);border-left:3px solid ' + co.color + '">';
+          html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
+          html += '<div style="margin-top:10px;padding:12px;background:var(--color-bg-card);border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
+          html += '</details>';
+        });
+        html += '</div>';
       }
+      html += '</div>';
     });
   }
   html += '</div>';
@@ -363,12 +365,13 @@ function renderLoopInterviewTab(el, co) {
 
     html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">What They Evaluate:</h4>';
     html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">';
-    fc.whatTheyEvaluate.forEach(function(w) {
-      var hasQuestion = w.indexOf('?') !== -1;
-      var tip = hasQuestion ? 'Prepare a specific STAR example that demonstrates this.' : 'Think of a time when you demonstrated this quality.';
+    fc.whatTheyEvaluate.forEach(function(w, wIdx) {
+      var detail = (fc.evaluateDetails && fc.evaluateDetails[wIdx]) || '';
       html += '<details style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:8px 12px;background:var(--color-bg)">';
       html += '<summary style="cursor:pointer;font-size:0.82rem;color:var(--color-text)">' + w + '</summary>';
-      html += '<div style="margin-top:6px;font-size:0.78rem;color:var(--color-text-muted);font-style:italic;padding-left:8px;border-left:2px solid var(--color-success)">' + tip + '</div>';
+      if (detail) {
+        html += '<div style="margin-top:8px;font-size:0.8rem;color:var(--color-text);line-height:1.7;padding:10px 12px;background:var(--color-bg-card);border-radius:var(--radius-sm);border-left:3px solid var(--color-success)">' + detail + '</div>';
+      }
       html += '</details>';
     });
     html += '</div>';
