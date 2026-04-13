@@ -198,6 +198,30 @@ function toggleLP(idx) {
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
+function slugify(str) {
+  return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+// Navigate to a question, opening all parent details and smooth-scrolling
+function jumpToQuestion(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  // Open the target details and all its ancestor details elements
+  var current = el;
+  while (current && current !== document.body) {
+    if (current.tagName === 'DETAILS') current.open = true;
+    current = current.parentElement;
+  }
+  // Small delay to let layout settle after opening, then scroll
+  setTimeout(function() {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Brief highlight to draw the eye
+    var originalBg = el.style.boxShadow;
+    el.style.transition = 'box-shadow 0.3s';
+    el.style.boxShadow = '0 0 0 3px var(--color-success)';
+    setTimeout(function() { el.style.boxShadow = originalBg; }, 1500);
+  }, 100);
+}
 
 function formatStarAnswer(answer, color) {
   if (!answer) return '';
@@ -279,6 +303,60 @@ function renderLoopInterviewTab(el, co) {
   html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">' + loop.whyAmazon + '</div>';
   html += '</div>';
 
+  // Story Matrix — the go-to reference during interview
+  if (loop.storyMatrix && loop.storyMatrix.length) {
+    html += '<div style="background:var(--color-bg-card);border:2px solid var(--color-success);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+    html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Story Matrix — Your Interview Cheat Sheet</h3>';
+    html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">When they ask "tell me about a time...", scan this matrix to pick the right story. <strong style="color:var(--color-success)">Click any topic chip</strong> to jump directly to the prepared STAR answer.</p>';
+
+    html += '<div style="display:flex;flex-direction:column;gap:12px">';
+    loop.storyMatrix.forEach(function(story) {
+      html += '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:14px;border-left:4px solid var(--color-success)">';
+      // Story header
+      html += '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">';
+      html += '<div style="font-weight:700;color:var(--color-heading);font-size:0.95rem">' + story.name + '</div>';
+      html += '<div style="font-size:0.72rem;color:var(--color-text-muted)">' + story.topics.length + ' mapped question' + (story.topics.length === 1 ? '' : 's') + '</div>';
+      html += '</div>';
+      // Summary
+      html += '<div style="font-size:0.8rem;color:var(--color-text);line-height:1.6;margin-bottom:8px">' + story.summary + '</div>';
+      // Key numbers
+      if (story.keyNumbers && story.keyNumbers.length) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
+        story.keyNumbers.forEach(function(n) {
+          html += '<span style="background:var(--color-success)22;color:var(--color-success);padding:2px 8px;border-radius:3px;font-size:0.7rem;font-weight:700">' + n + '</span>';
+        });
+        html += '</div>';
+      }
+      // Topic chips — clickable to jump
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;border-top:1px solid var(--color-border)">';
+      story.topics.forEach(function(t) {
+        var chipColor = t.type === 'lp' ? co.color : 'var(--color-success)';
+        var chipLabel = t.type === 'lp' ? 'LP' : 'FC';
+        var strengthIcon = t.strength === 'primary' ? '★' : '☆';
+        var slug = slugify(t.name);
+        var targetId = 'q-' + t.type + '-' + slug + '-' + t.qIdx;
+        html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'' + targetId + '\')" style="display:inline-flex;align-items:center;gap:4px;background:' + chipColor + '11;color:' + chipColor + ';padding:4px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;text-decoration:none;border:1px solid ' + chipColor + '44;cursor:pointer" title="' + (t.note || '') + '">';
+        html += '<span style="font-size:0.6rem;opacity:0.7">' + chipLabel + '</span>';
+        html += '<span>' + t.name + ' Q' + (t.qIdx + 1) + '</span>';
+        html += '<span style="font-size:0.65rem">' + strengthIcon + '</span>';
+        html += '</a>';
+      });
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Legend
+    html += '<div style="margin-top:14px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);font-size:0.72rem;color:var(--color-text-muted);display:flex;gap:16px;flex-wrap:wrap">';
+    html += '<span><strong style="color:' + co.color + '">LP</strong> = Leadership Principle</span>';
+    html += '<span><strong style="color:var(--color-success)">FC</strong> = Functional Competency</span>';
+    html += '<span>★ = Primary story for this topic</span>';
+    html += '<span>☆ = Backup story</span>';
+    html += '<span>Hover chip for context note</span>';
+    html += '</div>';
+    html += '</div>';
+  }
+
   // Interview Breakdown
   html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
   html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Interview Topic Breakdown</h3>';
@@ -325,9 +403,11 @@ function renderLoopInterviewTab(el, co) {
       html += '</div></details>';
       // Questions — always visible, individually expandable for answers
       if (lpQs.length) {
+        var lpSlug = slugify(lp.name);
         html += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
-        lpQs.forEach(function(q) {
-          html += '<details style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--color-bg);border-left:3px solid ' + co.color + '">';
+        lpQs.forEach(function(q, qIdx) {
+          var qId = 'q-lp-' + lpSlug + '-' + qIdx;
+          html += '<details id="' + qId + '" style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--color-bg);border-left:3px solid ' + co.color + '">';
           html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
           html += '<div style="margin-top:10px;padding:12px;background:var(--color-bg-card);border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
           html += '</details>';
@@ -382,8 +462,10 @@ function renderLoopInterviewTab(el, co) {
     html += '</ul>';
 
     html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:8px">Questions They Might Ask:</h4>';
-    fc.questions.forEach(function(q) {
-      html += '<details style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid ' + co.color + '">';
+    var fcSlug = slugify(fc.name);
+    fc.questions.forEach(function(q, qIdx) {
+      var qId = 'q-fc-' + fcSlug + '-' + qIdx;
+      html += '<details id="' + qId + '" style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid ' + co.color + '">';
       html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
       html += '<div style="margin-top:10px;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm)">' + formatStarAnswer(q.answer, co.color) + '</div>';
       html += '</details>';
