@@ -214,7 +214,7 @@ function jumpToQuestion(id) {
   }
   // Small delay to let layout settle after opening, then scroll
   setTimeout(function() {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     // Brief highlight to draw the eye
     var originalBg = el.style.boxShadow;
     el.style.transition = 'box-shadow 0.3s';
