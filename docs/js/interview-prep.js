@@ -272,9 +272,11 @@ function renderLoopInterviewTab(el, co) {
   html += '<div style="margin-top:12px;padding:8px 16px;background:var(--color-bg);border-radius:var(--radius-sm);display:inline-block;font-size:0.8rem;color:var(--color-text-muted)">Debrief: ' + debriefStr + ' (after 11 AM PT) &mdash; ' + (daysUntilDebrief <= 0 ? 'TODAY' : daysUntilDebrief + ' days') + '</div>';
   html += '</div>';
 
+  var backBtn = '<a href="javascript:void(0)" onclick="jumpToQuestion(\'story-matrix\')" style="font-size:0.68rem;padding:3px 8px;background:var(--color-success)22;color:var(--color-success);border:1px solid var(--color-success)44;border-radius:3px;text-decoration:none;font-weight:600;cursor:pointer;white-space:nowrap">↑ Story Matrix</a>';
+  function sectionHeader(id, title, extra) { return '<div id="' + id + '" style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">' + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' + '<h3 style="color:var(--color-heading);margin:0">' + title + '</h3>' + backBtn + '</div>' + (extra || ''); }
+
   // Day Schedule
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Your Day Schedule</h3>';
+  html += sectionHeader('day-schedule', 'Your Day Schedule');
   loop.schedule.forEach(function(slot) {
     var isInterview = slot.type === 'interview';
     var isAffinity = slot.type === 'affinity';
@@ -292,21 +294,25 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Tell Me About Yourself (short)
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Tell Me About Yourself" (90 sec max)</h3>';
+  html += sectionHeader('tell-me', '"Tell Me About Yourself" (90 sec max)');
   html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">' + loop.tellMeAboutYourself + '</div>';
   html += '</div>';
 
   // Why Amazon (short)
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Why Amazon? Why This Role?"</h3>';
+  html += sectionHeader('why-amazon', '"Why Amazon? Why This Role?"');
   html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;white-space:pre-line;background:var(--color-bg);padding:16px;border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">' + loop.whyAmazon + '</div>';
   html += '</div>';
 
   // Story Matrix — the go-to reference during interview
   if (loop.storyMatrix && loop.storyMatrix.length) {
-    html += '<div style="background:var(--color-bg-card);border:2px solid var(--color-success);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-    html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Story Matrix — Your Interview Cheat Sheet</h3>';
+    html += '<div id="story-matrix" style="background:var(--color-bg-card);border:2px solid var(--color-success);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px">';
+    html += '<h3 style="color:var(--color-heading);margin:0">Story Matrix — Your Interview Cheat Sheet</h3>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'key-numbers\')" style="font-size:0.7rem;padding:4px 10px;background:' + co.color + '22;color:' + co.color + ';border:1px solid ' + co.color + '44;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Key Numbers</a>';
+    html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'questions-to-ask\')" style="font-size:0.7rem;padding:4px 10px;background:#9C27B022;color:#9C27B0;border:1px solid #9C27B044;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Questions to Ask</a>';
+    html += '<a href="javascript:void(0)" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="font-size:0.7rem;padding:4px 10px;background:var(--color-error)22;color:var(--color-error);border:1px solid var(--color-error)44;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Collapse All</a>';
+    html += '</div></div>';
     html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">When they ask "tell me about a time...", scan this matrix to pick the right story. <strong style="color:var(--color-success)">Click any topic chip</strong> to jump directly to the prepared STAR answer.</p>';
 
     html += '<div style="display:flex;flex-direction:column;gap:12px">';
@@ -358,8 +364,7 @@ function renderLoopInterviewTab(el, co) {
   }
 
   // Interview Breakdown
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Interview Topic Breakdown</h3>';
+  html += sectionHeader('interview-breakdown', 'Interview Topic Breakdown');
   html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:12px">Each interviewer covers 3 topics. The FCs and LPs from Courtney\'s email may correspond to interviewer order.</p>';
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">';
   var breakdowns = [
@@ -382,9 +387,7 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Leadership Principles Being Tested
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">10 Leadership Principles Being Tested</h3>';
-  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Title expands study notes. Questions expand answers independently. Use during interviews to quickly find relevant questions.</p>';
+  html += sectionHeader('lps-section', '10 Leadership Principles Being Tested', '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Title expands study notes. Questions expand answers independently. Use during interviews to quickly find relevant questions.</p>');
   html += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">';
   if (typeof LP_DATA !== 'undefined') {
     LP_DATA.forEach(function(lp) {
@@ -426,7 +429,10 @@ function renderLoopInterviewTab(el, co) {
   html += '</div></div>';
 
   // Functional Competencies
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">5 Functional Competencies</h3>';
+  html += '<div id="fcs-section" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
+  html += '<h3 style="color:var(--color-heading);margin:0">5 Functional Competencies</h3>';
+  html += backBtn;
+  html += '</div>';
   loop.functionalCompetencies.forEach(function(fc, idx) {
     html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
@@ -482,8 +488,7 @@ function renderLoopInterviewTab(el, co) {
   });
 
   // Strategy Tips from Courtney
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:12px">Strategy Tips (from Prep Call with Courtney)</h3>';
+  html += sectionHeader('strategy-tips', 'Strategy Tips (from Prep Call with Courtney)');
   loop.strategyTips.forEach(function(t) {
     html += '<div style="margin-bottom:10px;padding:10px 14px;background:var(--color-bg);border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">';
     html += '<div style="font-size:0.85rem;font-weight:700;color:var(--color-heading)">' + t.tip + '</div>';
@@ -493,9 +498,7 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Questions to Ask
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Questions to Ask Interviewers (pick 2-3 per session)</h3>';
-  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">You have 15 min at the end of each interview. Mix practical + impressive questions. Also use the FC-specific questions above based on what was discussed.</p>';
+  html += sectionHeader('questions-to-ask', 'Questions to Ask Interviewers (pick 2-3 per session)', '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">You have 15 min at the end of each interview. Mix practical + impressive questions. Also use the FC-specific questions above based on what was discussed.</p>');
 
   html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:8px">Solid, Practical Questions:</h4>';
   loop.questionsToAskGeneral.forEach(function(q, i) {
@@ -515,8 +518,8 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Key Numbers Cheat Sheet
-  html += '<div style="background:var(--color-bg-card);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Key Numbers Cheat Sheet</h3>';
+  html += '<div id="key-numbers" style="background:var(--color-bg-card);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h3 style="color:var(--color-heading);margin:0">Key Numbers Cheat Sheet</h3>' + backBtn + '</div>';
   html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Keep this visible during interviews. Glance when you need a specific number.</p>';
   loop.keyNumbers.forEach(function(cat) {
     html += '<h4 style="color:' + co.color + ';font-size:0.85rem;margin:14px 0 8px">' + cat.category + '</h4>';
@@ -532,8 +535,7 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Checklist
-  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">Preparation Checklist</h3>';
+  html += sectionHeader('checklist', 'Preparation Checklist');
   var checklistSections = [
     { title: '2+ Days Before (by Friday April 18)', items: loop.checklist.twoDaysBefore },
     { title: 'Night Before (Saturday April 19)', items: loop.checklist.nightBefore },
@@ -551,8 +553,8 @@ function renderLoopInterviewTab(el, co) {
   html += '</div>';
 
   // Critical Reminders
-  html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
-  html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
+  html += '<div id="critical-reminders" style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="color:var(--color-error);margin:0">Critical Reminders</h3>' + backBtn + '</div>';
   html += '<ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">';
   html += '<li><strong>One interviewer is the Bar Raiser</strong> &mdash; independent evaluator from another team with veto power. Treat every round equally.</li>';
   html += '<li><strong>Don\'t repeat the same story more than twice</strong> &mdash; show your range across different projects.</li>';
