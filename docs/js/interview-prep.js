@@ -53,7 +53,7 @@ function openCompany(key) {
 
     <div class="interview__tabs">
       ${co.loopInterview ? `<button class="interview__tab active" onclick="showTab('${key}','loop',this)" style="color:var(--color-error);font-weight:700">Loop Interview Prep</button>` : ''}
-      ${co.loopInterview?.bluescape ? `<button class="interview__tab" onclick="showTab('${key}','bluescape',this)" style="color:#0078D4">Bluescape Guide</button>` : ''}
+      ${co.loopInterview?.bluescape ? `<button class="interview__tab" onclick="showTab('${key}','bluescape',this)" style="color:#0078D4;${co.loopInterview.bluescape.optional ? 'opacity:0.5' : ''}">Bluescape${co.loopInterview.bluescape.optional ? ' (Not Required)' : ''}</button>` : ''}
       ${co.phoneScreen ? `<button class="interview__tab ${co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success)">Phone Screen Prep</button>` : ''}
       ${key === 'amazon' ? `<button class="interview__tab" onclick="showTab('${key}','lps',this)" style="color:#FF9900">Leadership Principles</button>` : ''}
       <button class="interview__tab ${co.phoneScreen || co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
@@ -366,7 +366,7 @@ function renderLoopInterviewTab(el, co) {
     { label: 'Interview 1', lp: 1, fc: 2 },
     { label: 'Interview 2', lp: 2, fc: 1 },
     { label: 'Interview 3', lp: 3, fc: 0 },
-    { label: 'Interview 4', lp: 2, fc: 1 },
+    { label: 'Interview 4', lp: 3, fc: 0 },
     { label: 'Int. 5 (Stephen)', lp: 1, fc: 2 },
   ];
   breakdowns.forEach(function(b) {
@@ -378,12 +378,12 @@ function renderLoopInterviewTab(el, co) {
     html += '</div></div>';
   });
   html += '</div>';
-  html += '<div style="margin-top:8px;font-size:0.72rem;color:var(--color-text-muted)">Total: 9 LPs + 6 FCs = 15 topics across 5 interviewers</div>';
+  html += '<div style="margin-top:8px;font-size:0.72rem;color:var(--color-text-muted)">Total: 10 LPs + 5 FCs = 15 topics across 5 interviewers</div>';
   html += '</div>';
 
   // Leadership Principles Being Tested
   html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
-  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">9 Leadership Principles Being Tested</h3>';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">10 Leadership Principles Being Tested</h3>';
   html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Title expands study notes. Questions expand answers independently. Use during interviews to quickly find relevant questions.</p>';
   html += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">';
   if (typeof LP_DATA !== 'undefined') {
@@ -426,7 +426,7 @@ function renderLoopInterviewTab(el, co) {
   html += '</div></div>';
 
   // Functional Competencies
-  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">6 Functional Competencies</h3>';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:16px">5 Functional Competencies</h3>';
   loop.functionalCompetencies.forEach(function(fc, idx) {
     html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
@@ -557,7 +557,7 @@ function renderLoopInterviewTab(el, co) {
   html += '<li><strong>One interviewer is the Bar Raiser</strong> &mdash; independent evaluator from another team with veto power. Treat every round equally.</li>';
   html += '<li><strong>Don\'t repeat the same story more than twice</strong> &mdash; show your range across different projects.</li>';
   html += '<li><strong>Each interviewer has 3 assigned topics</strong> &mdash; listen for whether they\'re asking LP behavioral or FC technical questions.</li>';
-  html += '<li><strong>Design session uses Bluescape</strong> &mdash; test it beforehand (see Bluescape Guide tab).</li>';
+  html += '<li><strong>Bluescape NOT required</strong> &mdash; recruiter confirmed you will not need it. Have notepad + pen ready for any design discussions.</li>';
   html += '<li><strong>Talk out loud during whiteboarding</strong> &mdash; they evaluate your process, not just the final drawing.</li>';
   html += '<li><strong>Do NOT use GenAI during the interview</strong> &mdash; they explicitly warned. Failure to comply = disqualification.</li>';
   html += '<li><strong>Use "I" not "we"</strong> &mdash; even on team projects, be clear about YOUR individual contributions.</li>';

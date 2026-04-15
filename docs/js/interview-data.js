@@ -364,14 +364,14 @@ const INTERVIEW_DATA = {
       duration: '9:00 AM – 4:30 PM PT (interviews + affinity chat)',
       platform: 'Zoom',
       zoomNote: 'Same Zoom link for all interviews. Disconnect during breaks and reconnect for the next session.',
-      format: '5 interviews, ~60 min each. Each interviewer covers 3 topics (mix of Leadership Principles and Functional Competencies). One interviewer is the Bar Raiser — an independent evaluator from another team with veto power.',
+      format: '5 interviews, ~60 min each. 10 Leadership Principles + 5 Functional Competencies = 15 topics across 5 interviewers. Each interviewer covers 3 topics. One interviewer is the Bar Raiser — an independent evaluator from another team with veto power.',
       schedule: [
         { time: '9:00 – 10:00 AM', type: 'interview', label: 'Interview 1', topics: '1 LP + 2 FC', note: '' },
         { time: '10:00 – 11:00 AM', type: 'interview', label: 'Interview 2', topics: '2 LP + 1 FC', note: '' },
         { time: '11:00 – 11:30 AM', type: 'break', label: 'Break', note: 'Disconnect from Zoom. Stretch, hydrate, review notes for next round.' },
         { time: '11:30 AM – 12:30 PM', type: 'interview', label: 'Interview 3', topics: '3 LP', note: 'May have a shadow interviewer (learning — not evaluating you)' },
         { time: '12:30 – 1:00 PM', type: 'break', label: 'Break', note: 'Disconnect. Eat something light.' },
-        { time: '1:00 – 2:00 PM', type: 'interview', label: 'Interview 4', topics: '2 LP + 1 FC', note: '' },
+        { time: '1:00 – 2:00 PM', type: 'interview', label: 'Interview 4', topics: '3 LP', note: '' },
         { time: '2:00 – 2:30 PM', type: 'break', label: 'Break', note: 'Disconnect. Last break before the hiring manager.' },
         { time: '2:30 – 3:30 PM', type: 'interview', label: 'Interview 5 — Stephen Elliott (Hiring Manager)', topics: '1 LP + 2 FC', note: 'This is the hiring manager. He decides if you join his team.' },
         { time: '3:30 – 4:00 PM', type: 'break', label: 'Break', note: '' },
@@ -389,7 +389,6 @@ const INTERVIEW_DATA = {
             { name: 'Deliver Results', type: 'lp', qIdx: 0, strength: 'primary', note: 'Most impactful project' },
             { name: 'Deliver Results', type: 'lp', qIdx: 1, strength: 'primary', note: 'December 2025 deadline' },
             { name: 'Mechanical Engineering', type: 'fc', qIdx: 0, strength: 'primary', note: 'Full design process walkthrough' },
-            { name: 'Power Design', type: 'fc', qIdx: 4, strength: 'primary', note: '5-subsystem power distribution' },
             { name: 'Technical Problem Solving', type: 'fc', qIdx: 3, strength: 'primary', note: 'Multi-failure-point isolation' },
             { name: 'Technical Problem Solving', type: 'fc', qIdx: 4, strength: 'primary', note: 'Legacy replacement decision' },
             { name: 'System Design', type: 'fc', qIdx: 0, strength: 'primary', note: 'System from scratch' },
@@ -444,6 +443,7 @@ const INTERVIEW_DATA = {
           keyNumbers: ['60 → 6 parts/month (90%)', 'Deployed Jan 2026', 'Full WO traceability', 'Over-bake root cause'],
           topics: [
             { name: 'Customer Obsession', type: 'lp', qIdx: 0, strength: 'primary', note: 'Built tool instead of posting instructions' },
+            { name: 'Invent and Simplify', type: 'lp', qIdx: 0, strength: 'primary', note: 'Simplified by finding real root cause — process control, not paint' },
             { name: 'Bias for Action', type: 'lp', qIdx: 1, strength: 'primary', note: 'Waiting would have kept shipping bad parts' },
             { name: 'Technical Problem Solving', type: 'fc', qIdx: 1, strength: 'primary', note: 'Problem others missed — root cause outside paint booth' },
           ],
@@ -454,7 +454,6 @@ const INTERVIEW_DATA = {
           keyNumbers: ['4 axes', 'Arduino Giga', '3 interns', 'Custom motor hubs'],
           topics: [
             { name: 'Mechanical Engineering', type: 'fc', qIdx: 3, strength: 'primary', note: 'Off-the-shelf extrusion + custom motor hubs' },
-            { name: 'Power Design', type: 'fc', qIdx: 2, strength: 'primary', note: 'Stepper motor sizing for 4 axes' },
             { name: 'System Design', type: 'fc', qIdx: 2, strength: 'primary', note: 'Arduino chosen for maintainability' },
             { name: 'Hardware Reliability', type: 'fc', qIdx: 3, strength: 'primary', note: 'Black extrusion for optical environment' },
           ],
@@ -465,7 +464,6 @@ const INTERVIEW_DATA = {
           keyNumbers: ['3×16×8 ft', '4 months solo', '~15-person shop', 'Full lifecycle'],
           topics: [
             { name: 'Mechanical Engineering', type: 'fc', qIdx: 4, strength: 'primary', note: 'Designed for in-house manufacturing capabilities' },
-            { name: 'Power Design', type: 'fc', qIdx: 1, strength: 'backup', note: 'Multi-layer safety system' },
             { name: 'Hardware Reliability', type: 'fc', qIdx: 3, strength: 'backup', note: 'Food-safe environment, washdown' },
           ],
         },
@@ -475,8 +473,7 @@ const INTERVIEW_DATA = {
           keyNumbers: ['~50 pins multiplexed', '3.3V/5V rails', '3-4 months learning', 'In production'],
           topics: [
             { name: 'Learn and Be Curious', type: 'lp', qIdx: 0, strength: 'primary', note: 'Learned new skill (embedded) to deliver' },
-            { name: 'Power Design', type: 'fc', qIdx: 0, strength: 'primary', note: 'Full electrical system design' },
-            { name: 'Power Design', type: 'fc', qIdx: 3, strength: 'primary', note: 'Embedded + PCB from scratch' },
+            { name: 'Invent and Simplify', type: 'lp', qIdx: 1, strength: 'primary', note: 'Invented custom solution — nothing commercial existed' },
           ],
         },
         {
@@ -515,8 +512,8 @@ const INTERVIEW_DATA = {
           ],
         },
       ],
-      lpsBeingTested: ['Customer Obsession', 'Ownership', 'Are Right, A Lot', 'Learn and Be Curious', 'Insist on the Highest Standards', 'Bias for Action', 'Earn Trust', 'Dive Deep', 'Deliver Results'],
-      lpsNotCovered: ['Hire and Develop the Best', 'Invent and Simplify', 'Think Big', 'Frugality', 'Have Backbone; Disagree and Commit', 'Strive to be Earth\'s Best Employer', 'Success and Scale Bring Broad Responsibility'],
+      lpsBeingTested: ['Customer Obsession', 'Ownership', 'Invent and Simplify', 'Are Right, A Lot', 'Learn and Be Curious', 'Insist on the Highest Standards', 'Bias for Action', 'Earn Trust', 'Dive Deep', 'Deliver Results'],
+      lpsNotCovered: ['Hire and Develop the Best', 'Think Big', 'Frugality', 'Have Backbone; Disagree and Commit', 'Strive to be Earth\'s Best Employer', 'Success and Scale Bring Broad Responsibility'],
       lpQuestions: {
         'Customer Obsession': [
           { q: 'Tell me about a time you prioritized the end user\'s experience over the easiest solution.',
@@ -529,6 +526,12 @@ const INTERVIEW_DATA = {
             answer: 'S: At Safran, I was hired as an Automation Engineer specifically to build the robot arm test system. A few months in, I noticed that nobody was tracking equipment health across the production floor. Downtime events were recorded in a notebook on a supervisor\'s desk. Nobody analyzed patterns or trends.\n\nT: Nobody asked me to fix this — it wasn\'t in my job description. But I could see we were losing about 3 days of production per month to unplanned downtime, and nobody even knew why because there was no data.\n\nA: I designed and built a full equipment health monitoring platform from scratch. Python backend, MySQL database, REST APIs, web dashboards. I integrated 6 different equipment types: the Apix-ST, the legacy AST where I added an Arduino with an infrared sensor to detect usage, the videophotometers, the robot arm, the annealing oven where I installed a Raspberry Pi with a thermocouple, and the paint ovens where I built the complete timer and tracking system. Each equipment type needed a custom integration.\n\nR: Unplanned downtime dropped from about 3 days per month to 30 minutes every 6 months. Not because the equipment got better — but because I could now see failure trends forming and act before they caused outages. I did this entirely on my own initiative because the gap was obvious and the cost of not fixing it was clear.' },
           { q: 'Give me an example of when you thought long-term rather than just solving the immediate problem.',
             answer: 'S: When designing the RA-AST bed plate — the surface where test fixtures mount — I had an immediate need: get fixtures mounted accurately so we can start testing the first 3 part numbers. But I also knew we\'d eventually need to test 50+ part numbers and potentially add a vision system.\n\nT: Design a fixture mounting system that works immediately with existing fixtures but doesn\'t lock us into a dead-end architecture.\n\nA: I designed the bed plate with precision locating pins at 8 positions, replicating how fixtures mount on both the legacy AST and the Apix-ST. This meant we could reuse all existing fixtures immediately — no redesign needed. But I deliberately designed the pin layout and bed plate geometry to accommodate a future vision system that would automatically identify parts and load test sequences, eliminating the need for pins entirely. I also wrote 7-plus service documents specifically so our Chihuahua, Mexico site could install and operate the system without calling me.\n\nR: We were testing within weeks using existing fixtures. The system is now deploying to Chihuahua using my documentation. And the bed plate is ready for the vision upgrade whenever we\'re ready — I didn\'t have to redesign anything. Thinking about the next site and the next upgrade while solving today\'s problem saved us from having to rebuild later.' },
+        ],
+        'Invent and Simplify': [
+          { q: 'Tell me about a time you simplified a complex process or system.',
+            answer: 'S: At Safran, the paint department was losing about 60 parts per month to paint peeling defects. Multiple teams investigated paint formulation, application technique, surface preparation — weeks of meetings, no resolution. Meanwhile 60 bad parts a month kept going out.\n\nT: I needed to find the root cause and create a system that actually prevented the defects.\n\nA: Everyone was focused on the paint booth because that\'s where the symptom appeared. I stepped back and followed the parts through the full process. When I got to the curing ovens, I found the real problem: operators were tracking oven time by writing on the door with a marker. No timers, no alerts, no records. Parts were over-baking because operators lost track of time. The simplifying insight was that this wasn\'t a paint problem at all — it was a process control problem in curing. So instead of more paint investigation, I built an oven management system: Raspberry Pis, thermocouples, countdown timers, andon light alerts, digital work order tracking with full traceability.\n\nR: Deployed about 3 months ago and paint peeling dropped 90% — from 60 parts per month to around 6. The remaining defects are from FOD, painting technique, or mishandling — not over-baking — so the oven problem is solved. The key was the simplifying assumption: stop looking at the symptom and follow the process. Once I found that nobody was controlling bake time, the solution was straightforward.' },
+          { q: 'Describe a time you invented a solution because existing options were inadequate.',
+            answer: 'S: The RA-AST needed electrical continuity testing — verifying that when you press a switch, the right LEDs light up and the right circuits close. I evaluated commercial continuity testers, but none could handle our requirement: about 50 multiplexed pins tested simultaneously during a dynamic button press, correlated with mechanical force and travel in real time.\n\nT: Create a continuity testing capability that doesn\'t exist commercially, integrated into the robot arm test system.\n\nA: Since nothing off-the-shelf worked, I invented a custom solution from scratch. I taught myself STM32 embedded development and C programming — I had no prior embedded experience. I designed a custom PCB: power regulation for 3.3V and 5V rails, multiplexed GPIO with signal conditioning for ~50 test pins, and USB communication. The firmware I wrote detects the exact moment each circuit closes during a button press — correlating mechanical actuation with electrical actuation. It can tell if an LED turns on late, early, or not at all.\n\nR: The custom board is in production, testing 3 fully qualified part numbers with more being added continuously. Previously, continuity was manual — a technician connecting a panel to a test box and visually checking LEDs with no evidence. Now it\'s automated with timestamped documentation for every test. The whole thing cost a fraction of what a commercial test system would have — and no commercial system even does what ours does. Going from zero embedded experience to a production board took about 3-4 months.' },
         ],
         'Are Right, A Lot': [
           { q: 'Tell me about a time you changed your approach based on new data.',
@@ -628,58 +631,6 @@ const INTERVIEW_DATA = {
           ],
         },
         {
-          name: 'Power Design',
-          grasContext: 'Warehouse automation systems require power distribution across ASRS shuttles, conveyor drives, robotic cells, and control panels \u2014 often in multi-temperature environments where frozen zones stress electrical components differently. HDEs evaluate vendor power architectures and design complementary electrical systems for integration, safety circuits, and monitoring.',
-          description: 'Understanding of electrical power systems in automation \u2014 motor sizing, power distribution, embedded electronics, safety circuits, and power budgets for automated systems.',
-          whatTheyEvaluate: [
-            'Can you size motors and actuators for an application?',
-            'Do you understand electrical power distribution for automated systems?',
-            'Experience with embedded electronics and PCB design',
-            'Safety circuit design (E-stops, interlocks, lockout/tagout)',
-            'Power budgets and thermal management considerations',
-          ],
-          evaluateDetails: [
-            'Motor sizing means: calculate load (weight of moving assembly + payload), required acceleration and speed, derive torque requirement with safety factor, select motor that delivers that torque at operating speed, then match driver and power supply for peak current. At Amazon: ASRS shuttles need motors sized for tote weight across acceleration/deceleration profiles, conveyors need drives sized for throughput, portioning robots need actuators sized for food product resistance.',
-            'Power distribution for automated systems: how you deliver power from facility mains to individual subsystems \u2014 transformers, distribution panels, dedicated circuits for high-draw equipment (robot arms, conveyor drives), isolated circuits for sensitive measurement equipment, UPS for control systems. At Amazon: warehouse ASRS may draw hundreds of amps across dozens of shuttles. You need to understand single-line diagrams, circuit sizing, and how multi-temperature zones affect cable ratings and component derating.',
-            'Embedded electronics means designing custom PCBs when commercial solutions don\'t exist. Show you understand: microcontroller selection, power regulation (voltage rails, decoupling), signal conditioning, GPIO multiplexing for many I/O points, communication protocols (USB, SPI, I2C, UART), firmware development. Your STM32 board is a strong example \u2014 custom solution because nothing commercial handled 50 multiplexed pins during dynamic events.',
-            'Safety circuits in automation: E-stop circuits that cut power regardless of software state, safety interlocks that prevent access to moving parts, light curtains, two-hand controls, lockout/tagout procedures. At Amazon: warehouse equipment must meet OSHA and ANSI/RIA robot safety standards. Show defense-in-depth \u2014 software limits, hardware E-stop, physical guards, and monitoring as layered protection.',
-            'Power budgets: accounting for every subsystem\'s power draw, ensuring the total doesn\'t exceed facility capacity, managing thermal dissipation in enclosed panels. In frozen zones: components derate differently, condensation on warm-up cycles can short electronics, heating elements may be needed for control cabinets. Show you think about these environmental power challenges.',
-          ],
-          keyTalkingPoints: [
-            'STM32 custom PCB: Designed from scratch \u2014 power regulation (3.3V/5V rails), multiplexed GPIO for ~50-pin continuity testing, firmware in C',
-            'Gantry system: Sized stepper motors for 4-axis motion (torque requirements, current draw), selected drivers and power supply',
-            'Robot arm: UFactory 850 power requirements, emergency stop circuits, power sequencing on startup',
-            'Jenton: Pneumatic systems, electromechanical assemblies, UV lamp power and safety (auto shutoff, two-hand door)',
-            'Mechatronics degree: Power electronics, motor control theory, embedded systems fundamentals',
-          ],
-          questions: [
-            {
-              q: 'Tell me about your experience with electrical or power system design.',
-              answer: 'S: The RA-AST needed electrical continuity testing \u2014 about 50 multiplexed pins tested during button press, correlated with mechanical actuation in real time. I looked at commercial continuity testers and none could handle our requirements.\n\nT: Design a custom electrical system from scratch for production-grade continuity testing.\n\nA: I designed a custom PCB with an STM32 microcontroller: voltage regulation for 3.3V and 5V rails, multiplexed GPIO with signal conditioning for the ~50 test pins, and USB communication back to the PC. I wrote the firmware in C. The board detects if an LED turns on late, early, or not at all during a switch press \u2014 correlating electrical actuation with mechanical force and travel measurements from the FUTEK sensor.\n\nR: The custom STM32 board is in production, testing continuity on 3 fully qualified part numbers with more being added. Previously, continuity was manual \u2014 a technician would connect a panel and visually check LEDs with no documented evidence. Now it\'s automated with timestamped evidence for every test.',
-            },
-            {
-              q: 'How do you handle safety in your electrical designs?',
-              answer: 'S: Both the RA-AST and the Jenton UV conveyor required multiple layers of electrical safety for operator protection.\n\nT: Design safety systems that protect operators without making the equipment impractical to use.\n\nA: On the RA-AST, the robot arm has a physical E-stop button that cuts power immediately. The FUTEK load cell has a software force limit that triggers a controlled stop before the E-stop threshold \u2014 so the arm decelerates gracefully rather than just killing power. For the Jenton UV conveyor, I designed: two-hand door opening so you can\'t reach inside with one hand, automatic UV shutoff when any chamber opens, arm-reach distance calculations between moving parts and access points, and covered mechanisms. Each system has defense in depth \u2014 no single safety measure is the last line.\n\nR: Zero safety incidents on both systems. The RA-AST has been in production for 6+ months and the Jenton conveyor is running at the customer\'s food facility. The UV conveyor passed all safety requirements for a food production environment.',
-            },
-            {
-              q: 'How do you size motors and actuators for a new application?',
-              answer: 'S: For the videophotometer gantry, I needed to select stepper motors for 4 axes of motion \u2014 X-Y for part positioning, Z for camera height, and Y-axis rotation for angling parts toward the lamp.\n\nT: Size motors that could move the part smoothly and accurately while handling the full range of panel sizes and weights.\n\nA: I started with the load: the heaviest panel assembly plus fixture weight, plus the mass of the moving stage itself. Then acceleration requirements \u2014 we didn\'t need high speed, but we needed smooth, controllable motion for optical measurements where vibration affects image quality. I calculated torque requirements for each axis including safety factor, selected stepper motors that could deliver that torque at our operating speed, then matched drivers and a power supply rated for peak current draw across all four axes running simultaneously. I designed custom motor hubs in SolidWorks to connect the motors to the lead screws.\n\nR: All four axes move smoothly with no missed steps or vibration issues. The motor sizing was straightforward once I had the load and speed requirements defined. The key was calculating for worst case \u2014 heaviest panel, all axes moving \u2014 rather than typical operation.',
-            },
-            {
-              q: 'Tell me about your experience with embedded systems and PCB design.',
-              answer: 'S: For the RA-AST, no commercial solution could test ~50 electrical pins simultaneously during a button press while correlating with mechanical measurements. I needed a custom embedded solution.\n\nT: Design and build a production-grade PCB with an embedded microcontroller, from schematic through firmware.\n\nA: I chose the STM32 platform for its GPIO count and well-documented HAL libraries. Designed the schematic: power regulation with decoupling capacitors for clean signals, multiplexed GPIO routing to handle ~50 test pins without needing 50 dedicated GPIO lines, signal conditioning to protect the microcontroller from panel voltages, and USB interface for PC communication. Laid out the PCB considering signal integrity and power distribution. Wrote firmware in C \u2014 the main loop polls all pins at high frequency during a press event and timestamps each state change.\n\nR: The board has been in production for months with no hardware failures. It correlates mechanical actuation with electrical actuation in real time \u2014 for example, detecting if an LED activates 50ms late into a press, which would indicate a mechanical alignment issue. Going from no embedded experience to a production board was about 3-4 months of learning and iteration.',
-            },
-            {
-              q: 'How do you approach power distribution for a multi-component system?',
-              answer: 'S: The RA-AST integrates 5 subsystems that all need power: the UFactory 850 robot arm, the FUTEK USB520 load cell, the custom STM32 board, a PC for control software, and various peripherals like indicators and the E-stop circuit.\n\nT: Ensure reliable power delivery to all subsystems with proper isolation, sequencing, and safety.\n\nA: The robot arm has its own dedicated power supply per UFactory specifications \u2014 I don\'t share that with anything else because arm motion creates current spikes that could affect sensitive measurements. The FUTEK sensor and STM32 board are USB-powered from the PC, which provides clean regulated power. The E-stop circuit is wired independently so it can cut arm power regardless of software state. I designed the power-on sequence: PC boots first, then STM32 initializes and runs self-check, then the arm powers up and homes. This prevents the arm from moving before the safety monitoring is active.\n\nR: Zero power-related failures in 6+ months of production. The isolation between arm power and measurement circuits means we get clean force and continuity data even during rapid arm movements. The startup sequence ensures safety monitoring is always active before any motion begins.',
-            },
-          ],
-          questionsToAsk: [
-            'For the automation systems in warehouses, what does the power infrastructure look like? Are you designing for existing facility power or specifying new installations?',
-            'When a vendor delivers a system, do you ever redesign their power or safety circuits, or is that strictly their scope?',
-          ],
-        },
-        {
           name: 'Technical Problem Solving',
           grasContext: 'When a vendor\'s ASRS system underperforms in a real warehouse \u2014 throughput drops, items jam, sensors misread in cold zones \u2014 the HDE investigates. You distinguish between vendor design flaws, environmental factors, and integration issues. Root cause analysis on complex multi-vendor systems is daily work for the GRAS team.',
           description: 'Your methodology for diagnosing and solving hardware problems \u2014 root cause analysis, data-driven debugging, and systematic approaches when things don\'t work as expected.',
@@ -733,7 +684,7 @@ const INTERVIEW_DATA = {
         },
         {
           name: 'System Design',
-          grasContext: 'GRAS projects integrate multiple vendor systems into cohesive fulfillment workflows: ASRS + conveyor + portioning robots + bag sorting + cold chain management. The HDE architects how these subsystems connect, defining interfaces, data flows, and fail-safe behaviors. The Bluescape whiteboarding session will likely test this competency.',
+          grasContext: 'GRAS projects integrate multiple vendor systems into cohesive fulfillment workflows: ASRS + conveyor + portioning robots + bag sorting + cold chain management. The HDE architects how these subsystems connect, defining interfaces, data flows, and fail-safe behaviors. A whiteboarding or system design session may test this competency.',
           description: 'End-to-end system thinking \u2014 architecting systems with multiple subsystems, defining interfaces, integration planning, and making trade-offs at the system level.',
           whatTheyEvaluate: [
             'Can you think end-to-end? Requirements \u2192 architecture \u2192 subsystems \u2192 interfaces \u2192 testing',
@@ -747,7 +698,7 @@ const INTERVIEW_DATA = {
             'Decomposition for warehouse automation: separate by function (storage, transport, manipulation, sorting, packaging), by vendor (each vendor\'s system is a subsystem), and by temperature zone (ambient, chilled, frozen may need different solutions). Each subsystem should be independently testable and replaceable. Your RA-AST does this: arm, sensor, continuity board, fixtures, and software are 5 independent subsystems.',
             'Interfaces in multi-vendor systems: mechanical interfaces (bolt patterns, conveyor heights, tote dimensions), electrical interfaces (power, signals, E-stop chains), data interfaces (protocols, APIs, data formats), and operational interfaces (handoff sequences, error handling). At Amazon: when an ASRS hands a tote to a conveyor, you need the physical handoff (height, speed), the signal handoff (tote ID, destination), and the error case (what if the conveyor is full?).',
             'System-level trade-offs for GRAS: higher throughput costs more and may reduce reliability. Vendor A\'s ASRS is faster but Vendor B\'s is more reliable in frozen zones. Custom solution gives you full control but takes 6 months vs. vendor solution in 6 weeks. Show you evaluate on multiple axes \u2014 cost, performance, reliability, maintainability, timeline \u2014 not just one.',
-            'This is likely the Bluescape whiteboarding session. Practice: draw a block diagram, label interfaces, talk through your reasoning AS you draw. Narrate trade-offs: "I\'m choosing this approach because..." The interviewer evaluates HOW you think, not whether your design is perfect. Ask clarifying questions first. Budget ~10 min on requirements, ~30 min designing, ~10 min discussion.',
+            'If there is a design/whiteboarding session, practice: draw a block diagram, label interfaces, talk through your reasoning AS you draw. Narrate trade-offs: "I\'m choosing this approach because..." The interviewer evaluates HOW you think, not whether your design is perfect. Ask clarifying questions first. Budget ~10 min on requirements, ~30 min designing, ~10 min discussion.',
           ],
           keyTalkingPoints: [
             'RA-AST: 5 integrated subsystems with defined interfaces \u2014 arm (Ethernet), FUTEK (USB), STM32 (USB), fixtures (mechanical), Python software (orchestration)',
@@ -954,11 +905,11 @@ const INTERVIEW_DATA = {
       ],
       checklist: {
         twoDaysBefore: [
-          'Test Bluescape — open whiteboard link in Firefox/Edge, practice drawing (see Bluescape tab)',
+          'Bluescape NOT required per recruiter — but still good to practice whiteboarding on paper/notepad',
           'Test Zoom — camera, mic, headset, internet',
           'Have backup ready: notepad + pen, or handheld whiteboard + dark marker',
-          'Review all STAR stories — you need 6-8 varied stories covering the 9 LPs being tested',
-          'Review all 6 Functional Competencies — know your talking points for each',
+          'Review all STAR stories — you need 6-8 varied stories covering the 10 LPs being tested',
+          'Review all 5 Functional Competencies — know your talking points for each',
           'Practice "Tell me about yourself" out loud 3x (90 sec max)',
           'Practice "Why Amazon" out loud 2x',
           'Review job description: https://www.amazon.jobs/jobs/3196391',
@@ -969,7 +920,7 @@ const INTERVIEW_DATA = {
         ],
         nightBefore: [
           'Quick re-read of this prep material (don\'t over-study)',
-          'Open Bluescape and verify it loads',
+          'Bluescape NOT required — have notepad + pen ready in case any design discussion',
           'Charge laptop, test headset/mic one more time',
           'Prepare quiet room for the FULL DAY — 9 AM to 4:30 PM',
           'Set alarms: 7:30 AM wake up, 8:30 AM final review, 8:50 AM join Zoom',
@@ -979,7 +930,7 @@ const INTERVIEW_DATA = {
         dayOf: [
           'Light breakfast — don\'t interview hungry or overly full',
           'Quick review of key numbers and FC talking points only',
-          'Open Bluescape tab in Firefox/Edge',
+          'Have notepad + pen ready for any design discussion',
           'Open this prep page with key numbers and questions visible',
           'Join Zoom at 8:50 AM (10 min early for Interview 1)',
           'Quiet room, no distractions, strong internet, phone on silent',
@@ -994,7 +945,7 @@ const INTERVIEW_DATA = {
           'Don\'t repeat the same story more than twice across all 5 interviews',
           'Mention scope and scale: how big, how many teams, how many part numbers',
           'Speak to strategy and long-term thinking (HDE level 3 cares about this)',
-          'In the Bluescape session: talk out loud while drawing, ask clarifying questions first',
+          'If asked a design question: talk out loud while sketching, ask clarifying questions first',
           'It\'s okay to pause: "Let me think about the best example for that..."',
           'It\'s okay to share failures: "I should\'ve done X" shows growth',
           'Don\'t get frazzled if interrupted — they\'re redirecting you to STAR format',
@@ -1004,6 +955,7 @@ const INTERVIEW_DATA = {
         ],
       },
       bluescape: {
+        optional: true,
         url: 'https://client.ext.bluescape.ee-infra.aws.dev/-K_CR5H8spJFNlNTEUwn',
         recommendedBrowser: 'Firefox or Edge (Chrome only in Incognito to avoid extensions blocking it)',
         backupPlan: 'Notepad + pen, or handheld whiteboard + dark marker. Share via camera if Bluescape has issues.',
