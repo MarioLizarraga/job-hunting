@@ -269,6 +269,9 @@ function renderLoopInterviewTab(el, co) {
   html += '<div style="color:var(--color-text-muted);font-size:0.85rem">' + loop.duration + ' via ' + loop.platform + '</div>';
   html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--color-text);line-height:1.6">' + loop.format + '</div>';
   html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text-muted)">' + loop.zoomNote + '</div>';
+  if (loop.zoomMeetingId) {
+    html += '<div style="margin-top:8px;padding:8px 16px;background:var(--color-bg);border-radius:var(--radius-sm);display:inline-block;font-size:0.78rem;color:var(--color-text)"><strong>Zoom Meeting ID:</strong> ' + loop.zoomMeetingId + ' &middot; <strong>Passcode:</strong> ' + loop.zoomPasscode + (loop.zoomPhoneUS ? ' &middot; <strong>Phone (US):</strong> ' + loop.zoomPhoneUS : '') + '</div>';
+  }
   html += '<div style="margin-top:12px;padding:8px 16px;background:var(--color-bg);border-radius:var(--radius-sm);display:inline-block;font-size:0.8rem;color:var(--color-text-muted)">Debrief: ' + debriefStr + ' (after 11 AM PT) &mdash; ' + (daysUntilDebrief <= 0 ? 'TODAY' : daysUntilDebrief + ' days') + '</div>';
   html += '</div>';
 
@@ -309,6 +312,7 @@ function renderLoopInterviewTab(el, co) {
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px">';
     html += '<h3 style="color:var(--color-heading);margin:0">Story Matrix — Your Interview Cheat Sheet</h3>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'interviewers\')" style="font-size:0.7rem;padding:4px 10px;background:#9C27B022;color:#9C27B0;border:1px solid #9C27B044;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Interviewers</a>';
     html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'key-numbers\')" style="font-size:0.7rem;padding:4px 10px;background:' + co.color + '22;color:' + co.color + ';border:1px solid ' + co.color + '44;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Key Numbers</a>';
     html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'questions-to-ask\')" style="font-size:0.7rem;padding:4px 10px;background:#9C27B022;color:#9C27B0;border:1px solid #9C27B044;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Questions to Ask</a>';
     html += '<a href="javascript:void(0)" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="font-size:0.7rem;padding:4px 10px;background:var(--color-error)22;color:var(--color-error);border:1px solid var(--color-error)44;border-radius:4px;text-decoration:none;font-weight:600;cursor:pointer">Collapse All</a>';
@@ -360,6 +364,87 @@ function renderLoopInterviewTab(el, co) {
     html += '<span>☆ = Backup story</span>';
     html += '<span>Hover chip for context note</span>';
     html += '</div>';
+    html += '</div>';
+  }
+
+  // Your Interviewers — detailed per-person prep
+  if (loop.interviewers && loop.interviewers.length) {
+    html += '<div id="interviewers" style="background:var(--color-bg-card);border:2px solid #9C27B0;border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<h3 style="color:var(--color-heading);margin:0">Your Interviewers — Tailored Prep</h3>';
+    html += backBtn;
+    html += '</div>';
+    html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Confirmed roster from Courtney. Each card: their background, likely focus, questions they might ask you (with <strong style="color:var(--color-success)">clickable story links</strong>), and questions YOU can ask them.</p>';
+
+    loop.interviewers.forEach(function(iv) {
+      var bg = iv.order === 6 ? '#9C27B011' : (iv.order === 5 ? co.color + '11' : 'var(--color-bg)');
+      var borderColor = iv.order === 6 ? '#9C27B0' : (iv.order === 5 ? co.color : '#9C27B0');
+      html += '<div style="background:' + bg + ';border:1px solid ' + borderColor + '44;border-left:4px solid ' + borderColor + ';border-radius:var(--radius-sm);padding:16px;margin-bottom:12px">';
+
+      // Header row: order + names + time + topic count
+      html += '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">';
+      html += '<div style="font-weight:700;color:var(--color-heading);font-size:1rem">' + iv.order + '. ' + iv.names.join(' + ') + '</div>';
+      html += '<div style="font-size:0.75rem;color:var(--color-text-muted)">' + iv.time + ' &middot; ' + iv.topicCount + '</div>';
+      html += '</div>';
+
+      // Titles + LinkedIn
+      html += '<div style="font-size:0.8rem;color:' + borderColor + ';margin-bottom:8px">' + iv.titles.join(' / ') + '</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">';
+      iv.linkedIn.forEach(function(url, i) {
+        if (url && url.startsWith('http')) {
+          html += '<a href="' + url + '" target="_blank" style="font-size:0.7rem;padding:3px 8px;background:#0077B5;color:#fff;border-radius:3px;text-decoration:none;font-weight:600">LinkedIn: ' + (iv.names[i] || iv.names[0]) + '</a>';
+        }
+      });
+      html += '</div>';
+
+      // Background
+      html += '<div style="font-size:0.82rem;color:var(--color-text);line-height:1.6;margin-bottom:10px">' + iv.background + '</div>';
+
+      // Why they matter
+      if (iv.whyTheyMatter) {
+        html += '<div style="background:var(--color-bg);padding:10px 12px;border-left:3px solid var(--color-success);border-radius:var(--radius-sm);margin-bottom:10px">';
+        html += '<div style="font-size:0.72rem;font-weight:700;color:var(--color-success);margin-bottom:4px">WHY THEY MATTER</div>';
+        html += '<div style="font-size:0.8rem;color:var(--color-text);line-height:1.6">' + iv.whyTheyMatter + '</div>';
+        html += '</div>';
+      }
+
+      // Likely focus
+      if (iv.likelyFocus) {
+        html += '<div style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:12px;font-style:italic"><strong style="color:var(--color-heading)">Likely focus:</strong> ' + iv.likelyFocus + '</div>';
+      }
+
+      // Likely questions they might ask + story links
+      if (iv.theyMightAsk && iv.theyMightAsk.length) {
+        html += '<details style="margin-bottom:8px;background:var(--color-bg);padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--color-border)" open>';
+        html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:700;color:var(--color-heading)">Likely questions they might ask you (' + iv.theyMightAsk.length + ')</summary>';
+        html += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+        iv.theyMightAsk.forEach(function(q) {
+          html += '<div style="padding:8px 10px;background:var(--color-bg-card);border-radius:var(--radius-sm);border-left:3px solid ' + co.color + '">';
+          html += '<div style="font-size:0.82rem;color:var(--color-text);margin-bottom:4px">"' + q.q + '"</div>';
+          if (q.storyLink) {
+            html += '<a href="javascript:void(0)" onclick="jumpToQuestion(\'' + q.storyLink + '\')" style="font-size:0.72rem;color:var(--color-success);text-decoration:none;font-weight:600;cursor:pointer">→ Use story: ' + q.storyName + '</a>';
+          } else if (q.storyName) {
+            html += '<div style="font-size:0.72rem;color:var(--color-text-muted);font-style:italic">' + q.storyName + '</div>';
+          }
+          html += '</div>';
+        });
+        html += '</div></details>';
+      }
+
+      // Questions TO ask them
+      if (iv.questionsToAsk && iv.questionsToAsk.length) {
+        html += '<details style="background:var(--color-bg);padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--color-border)">';
+        html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:700;color:#9C27B0">Questions YOU can ask them (' + iv.questionsToAsk.length + ')</summary>';
+        html += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+        iv.questionsToAsk.forEach(function(q) {
+          html += '<div style="padding:8px 10px;background:var(--color-bg-card);border-radius:var(--radius-sm);border-left:3px solid #9C27B0;font-size:0.82rem;color:var(--color-text);line-height:1.5">"' + q + '"</div>';
+        });
+        html += '</div></details>';
+      }
+
+      html += '</div>';
+    });
+
     html += '</div>';
   }
 
