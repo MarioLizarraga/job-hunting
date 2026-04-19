@@ -202,6 +202,13 @@ function slugify(str) {
   return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+// Expand all details elements inside a section (for nav hover)
+function expandSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.querySelectorAll('details').forEach(function(d) { d.open = true; });
+}
+
 // Navigate to a question, opening all parent details and smooth-scrolling
 function jumpToQuestion(id) {
   var el = document.getElementById(id);
@@ -261,6 +268,75 @@ function renderLoopInterviewTab(el, co) {
   var urgencyText = daysUntil <= 0 ? 'TODAY!' : daysUntil === 1 ? 'TOMORROW!' : daysUntil + ' days away';
 
   var html = '';
+
+  // One-time CSS for sticky nav + hover dropdowns
+  html += '<style>';
+  html += '.loop-nav{position:sticky;top:0;z-index:100;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)}';
+  html += '.loop-nav-btn{font-size:0.72rem;padding:5px 10px;background:var(--color-bg-card);color:var(--color-text);border:1px solid var(--color-border);border-radius:4px;cursor:pointer;font-weight:600;user-select:none;white-space:nowrap;transition:all 0.15s}';
+  html += '.loop-nav-btn:hover{background:' + co.color + '22;color:' + co.color + ';border-color:' + co.color + '}';
+  html += '.loop-nav-dropdown{position:relative}';
+  html += '.loop-nav-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px;min-width:180px;box-shadow:0 6px 16px rgba(0,0,0,0.4);z-index:200}';
+  html += '.loop-nav-dropdown:hover .loop-nav-menu{display:block}';
+  html += '.loop-nav-submenu{position:relative;padding:8px 12px;cursor:pointer;font-size:0.78rem;color:var(--color-text);display:flex;justify-content:space-between;align-items:center;border-radius:4px;font-weight:600}';
+  html += '.loop-nav-submenu:hover{background:' + co.color + '22;color:' + co.color + '}';
+  html += '.loop-nav-submenu-content{display:none;position:absolute;left:calc(100% + 4px);top:-6px;background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:6px;min-width:480px;max-width:90vw;max-height:75vh;overflow-y:auto;box-shadow:0 6px 16px rgba(0,0,0,0.4)}';
+  html += '.loop-nav-submenu:hover .loop-nav-submenu-content{display:block}';
+  html += '.loop-nav-qitem{padding:6px 10px;font-size:0.74rem;color:var(--color-text);cursor:pointer;border-radius:3px;line-height:1.4;font-weight:400}';
+  html += '.loop-nav-qitem:hover{background:var(--color-success)22;color:var(--color-success)}';
+  html += '.loop-nav-group{font-size:0.68rem;font-weight:700;color:' + co.color + ';padding:8px 10px 2px;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--color-border);margin-top:4px}';
+  html += '.loop-nav-group:first-child{border-top:none;margin-top:0}';
+  html += '</style>';
+
+  // Sticky nav bar with hover-expand + Questions dropdown
+  html += '<div class="loop-nav">';
+  html += '<span style="font-size:0.7rem;color:var(--color-text-muted);font-weight:700;margin-right:4px">JUMP:</span>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'story-matrix\')" onclick="jumpToQuestion(\'story-matrix\')">Story Matrix</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'interviewers\')" onclick="jumpToQuestion(\'interviewers\')">Interviewers</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'day-schedule\')" onclick="jumpToQuestion(\'day-schedule\')">Schedule</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'lps-section\')" onclick="jumpToQuestion(\'lps-section\')">LPs</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'fcs-section\')" onclick="jumpToQuestion(\'fcs-section\')">FCs</div>';
+
+  // Questions dropdown with nested LPs/FCs submenus
+  html += '<div class="loop-nav-btn loop-nav-dropdown">Questions &#9662;';
+  html += '<div class="loop-nav-menu">';
+
+  // LPs submenu
+  html += '<div class="loop-nav-submenu">LPs <span>&#9654;</span>';
+  html += '<div class="loop-nav-submenu-content">';
+  if (loop.lpQuestions) {
+    Object.keys(loop.lpQuestions).forEach(function(lp) {
+      html += '<div class="loop-nav-group">' + lp + '</div>';
+      loop.lpQuestions[lp].forEach(function(q, i) {
+        var qId = 'q-lp-' + slugify(lp) + '-' + i;
+        html += '<div class="loop-nav-qitem" onclick="jumpToQuestion(\'' + qId + '\')">&ldquo;' + q.q + '&rdquo;</div>';
+      });
+    });
+  }
+  html += '</div></div>';
+
+  // FCs submenu
+  html += '<div class="loop-nav-submenu">FCs <span>&#9654;</span>';
+  html += '<div class="loop-nav-submenu-content">';
+  if (loop.functionalCompetencies) {
+    loop.functionalCompetencies.forEach(function(fc) {
+      html += '<div class="loop-nav-group">' + fc.name + '</div>';
+      fc.questions.forEach(function(q, i) {
+        var qId = 'q-fc-' + slugify(fc.name) + '-' + i;
+        html += '<div class="loop-nav-qitem" onclick="jumpToQuestion(\'' + qId + '\')">&ldquo;' + q.q + '&rdquo;</div>';
+      });
+    });
+  }
+  html += '</div></div>';
+
+  html += '</div></div>'; // close menu + dropdown
+
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'strategy-tips\')" onclick="jumpToQuestion(\'strategy-tips\')">Tips</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToQuestion(\'questions-to-ask\')">Qs to Ask</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToQuestion(\'key-numbers\')">Cheat Sheet</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToQuestion(\'checklist\')">Checklist</div>';
+  html += '<div class="loop-nav-btn" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="background:var(--color-error)22;color:var(--color-error);border-color:var(--color-error)44">Collapse All</div>';
+
+  html += '</div>'; // close loop-nav
 
   // Countdown banner
   html += '<div style="background:linear-gradient(135deg,' + co.color + '22,' + co.color + '11);border:2px solid ' + co.color + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px;text-align:center">';
