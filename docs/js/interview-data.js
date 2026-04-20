@@ -1079,6 +1079,58 @@ const INTERVIEW_DATA = {
           { label: 'Certifications', value: 'CATIA V5 Expert, Six Sigma Green Belt DFSS, GD&T' },
         ]},
       ],
+      generalQuestions: [
+        {
+          q: 'Why are you looking for a new role? / Why leave Safran?',
+          tip: 'Keep it positive — frame it as what you\'re going toward, not what you\'re running from. Avoid criticizing Safran.',
+          answer: 'I\'m not unhappy at Safran. I\'ve built a lot there and there are still projects to finish. But the scope is fundamentally limited. Safran makes great aerospace parts, but the engineering challenges at Amazon\'s scale — especially in grocery automation with multi-temperature zones, perishable goods, ASRS systems — are a different class of problem. I want to work on harder problems at a bigger scale. It\'s not about leaving Safran; it\'s about going toward something harder.',
+        },
+        {
+          q: 'Tell me about a time you disagreed with your manager.',
+          tip: 'Amazon loves "disagree and commit" — but this LP is NOT on your loop. Still, this is a common question. Show respectful disagreement backed by data, then commitment to the final call.',
+          answer: 'When I started building the equipment monitoring platform at Safran, my manager initially questioned whether it was worth my time — my role was Automation Engineer for the robot arm project, not production-floor monitoring. His concern was focus and scope creep. I disagreed because I could see the cost we were paying in unplanned downtime and I had data showing we didn\'t even know where that downtime was coming from. I laid out what I thought the platform would save us in visibility, and I proposed building it incrementally on my own time so the robot arm project wouldn\'t slip. He agreed to let me try a small version first. Once he saw the first dashboard catch an issue before it caused an outage, he was fully behind it. The lesson for me was that disagreement works when it\'s grounded in data and proposes a low-risk path forward, not when it\'s just pushing back.',
+        },
+        {
+          q: 'What\'s your biggest weakness?',
+          tip: 'Pick a real weakness (not a disguised strength like "I work too hard"). Show you\'re actively working on it and give concrete evidence of progress.',
+          answer: 'My biggest weakness is that I default to building things myself instead of delegating earlier. When I started at Safran, I built the equipment monitoring platform largely solo because it was faster for me to just do it than to onboard someone. That worked in the short term, but it meant the knowledge lived in my head, and when I finally did bring interns onto the ML defect detection project, I had to build the delegation muscle from scratch. I\'m actively working on this by structuring my intern projects with clear sub-problems and milestones, so someone else can own real pieces. I also started writing more documentation up front instead of at the end, which makes handoff possible. It\'s still not my default, but I catch myself now.',
+        },
+        {
+          q: 'Tell me about a significant failure or mistake.',
+          tip: 'Amazon explicitly wants failure stories — "we know failure is part of innovation. What matters is what you learned." Use a real one with a clear lesson.',
+          answer: 'My first fixture design for the RA-AST was a failure. I chose a modular approach — universal base plate with swappable adapters per panel type — because it seemed elegant and efficient. Fewer unique parts, faster changeover across our 50+ part numbers. I 3D-printed the first fixtures and started testing, and the data showed the adapter-to-base interface had too much play for sub-millimeter accuracy. The wobble was small but the measurements depend on it. I had to scrap the modular approach and redesign to dedicated fixtures per part number. That cost me weeks of iteration time. What I learned was that I had let design preference override the actual requirement. "Elegant" is a nice property but not a functional one. Since then I start every design by writing down the non-negotiable functional requirements first, and I only evaluate elegance after those are met.',
+        },
+        {
+          q: 'What\'s the biggest challenge you\'ve faced in your career?',
+          tip: 'Pick something that required real growth — technical, interpersonal, or scope-related. Show the learning, not just the hardship.',
+          answer: 'The biggest challenge was getting the RA-AST from blank page to production in about 6 months. I had to make vendor evaluation decisions in days, teach myself STM32 embedded development from zero, design and iterate fixtures, build a custom PCB, write Python control software, design a validation methodology that quality would accept, get it approved, train operators, and write documentation so it could scale to other sites. Any one of those tasks is a normal-sized project. Doing all of them in parallel under a hard deadline forced me to get ruthless about prioritization — 3 part numbers qualified by December, everything else deferred. It also taught me that a deep learning curve on one skill (embedded in this case) doesn\'t have to block the whole project if you compartmentalize it. The system is now in production saving 1,300+ hours a year, and it\'s the project I\'d point to as the hardest thing I\'ve pulled off.',
+        },
+        {
+          q: 'What are you most proud of?',
+          tip: 'Pick something with clear impact and ownership. Be specific about why you\'re proud — not just the outcome, but what it took.',
+          answer: 'The RA-AST, specifically because of the scaling aspect. It would be easy to be proud of the 67% cycle time reduction or the 1,300+ hours per year freed up. But what I\'m actually most proud of is that the system is deploying to our Chihuahua, Mexico site using documentation I wrote — a team I\'ve never met will be able to install, operate, calibrate, and troubleshoot it based on the service documents and the qualification framework I built. That\'s the part that feels like real engineering to me. Building something that works when you\'re there is one thing. Building something that works when you\'re not there is what makes it scale.',
+        },
+        {
+          q: 'How do you handle stress or pressure?',
+          tip: 'Show a methodical approach, not a stoic one. Concrete actions beat "I stay calm."',
+          answer: 'Stress for me usually comes from too many problems at once, not from one hard problem. So my response is almost always prioritization. I write everything down, rank it by actual impact rather than loudness, and attack the top item first without context-switching. During the RA-AST deadline crunch, I had multiple competing demands — add part numbers, fix fixtures, build the STM32 board, prep for quality review. I kept a single ordered list and cut anything below the threshold of what would affect the December milestone. The other thing that helps me is data. When a decision feels hard because the stakes are high, going and measuring the actual state almost always makes the decision obvious. Stress usually decreases once you replace feelings with numbers.',
+        },
+        {
+          q: 'Where do you see yourself in 5 years?',
+          tip: 'Show growth ambition aligned with the company\'s trajectory. Avoid saying "your job" or anything that sounds like you\'re flight-risk.',
+          answer: 'In 5 years I want to be leading technical programs at a larger scope than I am now. Not necessarily people-management — I\'m more drawn to staff-level or principal-level technical leadership where you\'re responsible for the architecture and delivery of bigger systems. At Amazon that would mean growing into ownership of more of the GRAS automation stack, being the technical lead on multi-site deployments, and helping shape how the team evaluates and integrates vendor systems. The pattern I want to build on is the one I have now: start with a specific hard problem, own it end-to-end, deliver, then use that foundation to take on bigger scope. I don\'t have a specific title in mind — I care more about the problem scope than the title.',
+        },
+        {
+          q: 'Why should we hire you? / What would you bring to the team?',
+          tip: 'Tie your specific skill mix to the specific role. Generic "I\'m a hard worker" won\'t land.',
+          answer: 'Three things. First, my skill mix fits the role unusually well — I do mechanical design (SolidWorks, CATIA, Inventor), embedded electronics and PCB design, firmware in C, Python control software, and vendor evaluation. Most HDE candidates do a subset of those. That breadth means I can own full systems end-to-end, which is what the GRAS role calls for. Second, my pattern is building things from scratch when commercial options fall short — the RA-AST, the custom STM32 board, the monitoring platform. That\'s exactly the "design bespoke solutions when commercial options don\'t meet needs" part of the job description. Third, I\'ve been doing vendor evaluation and independent validation my whole career. The golden button validation, the Apix-ST source code investigation, the UFactory independent testing — those aren\'t unusual events for me, they\'re how I work. The difference at Amazon is the scale of what I\'d be validating, not the approach.',
+        },
+        {
+          q: 'Do you have any questions for us?',
+          tip: 'ALWAYS have questions ready. "No" signals lack of interest. Rotate through the questions-to-ask list at the end of every interview.',
+          answer: 'Pull 2-3 questions from your prepared list (see the "Questions to Ask Interviewers" section and each interviewer\'s tailored questions). Mix practical ("What does the first 90 days look like?") with impressive ("When a vendor system degrades in a real warehouse, how does the investigation process work?"). Ask different questions to different interviewers — they compare notes, so don\'t repeat.',
+        },
+      ],
       checklist: {
         twoDaysBefore: [
           'Bluescape NOT required per recruiter — but still good to practice whiteboarding on paper/notepad',

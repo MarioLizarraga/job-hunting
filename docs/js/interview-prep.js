@@ -336,6 +336,7 @@ function renderLoopInterviewTab(el, co) {
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToSection(\'questions-to-ask\')">Qs to Ask</div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToSection(\'key-numbers\')">Cheat Sheet</div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToSection(\'checklist\')">Checklist</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'general-questions\')" onclick="jumpToSection(\'general-questions\')">General Qs</div>';
   html += '<div class="loop-nav-btn" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="background:var(--color-error)22;color:var(--color-error);border-color:var(--color-error)44">Collapse All</div>';
 
   // Questions dropdown — pushed to far right
@@ -748,6 +749,28 @@ function renderLoopInterviewTab(el, co) {
     });
   });
   html += '</div>';
+
+  // General Questions (common behavioral questions beyond LP/FC-specific)
+  if (loop.generalQuestions && loop.generalQuestions.length) {
+    html += '<div id="general-questions" style="background:var(--color-bg-card);border:2px solid #9C27B0;border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<h3 style="color:var(--color-heading);margin:0">General Questions They Could Ask</h3>';
+    html += backBtn;
+    html += '</div>';
+    html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Common behavioral/general questions that show up in any interview &mdash; not tied to a specific LP or FC. Click any question to see the prepared answer + prep tip.</p>';
+
+    loop.generalQuestions.forEach(function(q, i) {
+      var qId = 'q-general-' + i;
+      html += '<details id="' + qId + '" style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid #9C27B0">';
+      html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">' + (i + 1) + '. &ldquo;' + q.q + '&rdquo;</summary>';
+      if (q.tip) {
+        html += '<div style="margin-top:10px;padding:10px 12px;background:#9C27B011;border-left:3px solid #9C27B0;border-radius:var(--radius-sm);font-size:0.78rem;color:var(--color-text);line-height:1.6"><strong style="color:#9C27B0">Prep tip:</strong> ' + q.tip + '</div>';
+      }
+      html += '<div style="margin-top:10px;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);font-size:0.82rem;color:var(--color-text);line-height:1.7">' + q.answer + '</div>';
+      html += '</details>';
+    });
+    html += '</div>';
+  }
 
   // Critical Reminders
   html += '<div id="critical-reminders" style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
