@@ -209,6 +209,15 @@ function expandSection(id) {
   el.querySelectorAll('details').forEach(function(d) { d.open = true; });
 }
 
+// Collapse all details in a section, then scroll to it (for nav click — clean landing)
+function jumpToSection(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.querySelectorAll('details').forEach(function(d) { d.open = false; });
+  }
+  jumpToQuestion(id);
+}
+
 // Navigate to a question, opening all parent details and smooth-scrolling
 function jumpToQuestion(id) {
   var el = document.getElementById(id);
@@ -290,11 +299,11 @@ function renderLoopInterviewTab(el, co) {
   // Sticky nav bar with hover-expand + Questions dropdown
   html += '<div class="loop-nav">';
   html += '<span style="font-size:0.7rem;color:var(--color-text-muted);font-weight:700;margin-right:4px">JUMP:</span>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'story-matrix\')" onclick="jumpToQuestion(\'story-matrix\')">Story Matrix</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'interviewers\')" onclick="jumpToQuestion(\'interviewers\')">Interviewers</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'day-schedule\')" onclick="jumpToQuestion(\'day-schedule\')">Schedule</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'lps-section\')" onclick="jumpToQuestion(\'lps-section\')">LPs</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'fcs-section\')" onclick="jumpToQuestion(\'fcs-section\')">FCs</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'story-matrix\')" onclick="jumpToSection(\'story-matrix\')">Story Matrix</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'interviewers\')" onclick="jumpToSection(\'interviewers\')">Interviewers</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'day-schedule\')" onclick="jumpToSection(\'day-schedule\')">Schedule</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'lps-section\')" onclick="jumpToSection(\'lps-section\')">LPs</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'fcs-section\')" onclick="jumpToSection(\'fcs-section\')">FCs</div>';
 
   // Questions dropdown with nested LPs/FCs submenus
   html += '<div class="loop-nav-btn loop-nav-dropdown">Questions &#9662;';
@@ -330,10 +339,10 @@ function renderLoopInterviewTab(el, co) {
 
   html += '</div></div>'; // close menu + dropdown
 
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'strategy-tips\')" onclick="jumpToQuestion(\'strategy-tips\')">Tips</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToQuestion(\'questions-to-ask\')">Qs to Ask</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToQuestion(\'key-numbers\')">Cheat Sheet</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToQuestion(\'checklist\')">Checklist</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'strategy-tips\')" onclick="jumpToSection(\'strategy-tips\')">Tips</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToSection(\'questions-to-ask\')">Qs to Ask</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToSection(\'key-numbers\')">Cheat Sheet</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToSection(\'checklist\')">Checklist</div>';
   html += '<div class="loop-nav-btn" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="background:var(--color-error)22;color:var(--color-error);border-color:var(--color-error)44">Collapse All</div>';
 
   html += '</div>'; // close loop-nav
