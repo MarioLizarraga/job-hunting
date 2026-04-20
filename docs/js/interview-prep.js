@@ -290,6 +290,10 @@ function renderLoopInterviewTab(el, co) {
   html += '.loop-nav-submenu:hover{background:' + co.color + '22;color:' + co.color + '}';
   html += '.loop-nav-submenu-content{display:none;position:absolute;left:100%;top:-10px;background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 6px;min-width:480px;max-width:90vw;max-height:75vh;overflow-y:auto;box-shadow:0 6px 16px rgba(0,0,0,0.4);margin-left:-4px}'; // negative margin creates overlap
   html += '.loop-nav-submenu:hover .loop-nav-submenu-content,.loop-nav-submenu-content:hover{display:block}';
+  html += '.loop-nav-right{margin-left:auto}';
+  html += '.loop-nav-right .loop-nav-menu{left:auto;right:-8px}';
+  html += '.loop-nav-right .loop-nav-submenu{margin-right:0;margin-left:-8px;padding-right:14px;padding-left:22px;flex-direction:row-reverse}';
+  html += '.loop-nav-right .loop-nav-submenu-content{left:auto;right:100%;margin-left:0;margin-right:-4px}';
   html += '.loop-nav-qitem{padding:6px 10px;font-size:0.74rem;color:var(--color-text);cursor:pointer;border-radius:3px;line-height:1.4;font-weight:400}';
   html += '.loop-nav-qitem:hover{background:var(--color-success)22;color:var(--color-success)}';
   html += '.loop-nav-group{font-size:0.68rem;font-weight:700;color:' + co.color + ';padding:8px 10px 2px;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--color-border);margin-top:4px}';
@@ -305,8 +309,14 @@ function renderLoopInterviewTab(el, co) {
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'lps-section\')" onclick="jumpToSection(\'lps-section\')">LPs</div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'fcs-section\')" onclick="jumpToSection(\'fcs-section\')">FCs</div>';
 
-  // Questions dropdown with nested LPs/FCs submenus
-  html += '<div class="loop-nav-btn loop-nav-dropdown">Questions &#9662;';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'strategy-tips\')" onclick="jumpToSection(\'strategy-tips\')">Tips</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToSection(\'questions-to-ask\')">Qs to Ask</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToSection(\'key-numbers\')">Cheat Sheet</div>';
+  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToSection(\'checklist\')">Checklist</div>';
+  html += '<div class="loop-nav-btn" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="background:var(--color-error)22;color:var(--color-error);border-color:var(--color-error)44">Collapse All</div>';
+
+  // Questions dropdown — pushed to far right
+  html += '<div class="loop-nav-btn loop-nav-dropdown loop-nav-right">Questions &#9662;';
   html += '<div class="loop-nav-menu">';
 
   // LPs submenu
@@ -338,12 +348,6 @@ function renderLoopInterviewTab(el, co) {
   html += '</div></div>';
 
   html += '</div></div>'; // close menu + dropdown
-
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'strategy-tips\')" onclick="jumpToSection(\'strategy-tips\')">Tips</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'questions-to-ask\')" onclick="jumpToSection(\'questions-to-ask\')">Qs to Ask</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'key-numbers\')" onclick="jumpToSection(\'key-numbers\')">Cheat Sheet</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'checklist\')" onclick="jumpToSection(\'checklist\')">Checklist</div>';
-  html += '<div class="loop-nav-btn" onclick="document.querySelectorAll(\'#interview-tab-content details[open]\').forEach(function(d){d.open=false})" style="background:var(--color-error)22;color:var(--color-error);border-color:var(--color-error)44">Collapse All</div>';
 
   html += '</div>'; // close loop-nav
 
