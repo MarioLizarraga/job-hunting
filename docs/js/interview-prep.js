@@ -304,7 +304,30 @@ function renderLoopInterviewTab(el, co) {
   html += '<div class="loop-nav">';
   html += '<span style="font-size:0.7rem;color:var(--color-text-muted);font-weight:700;margin-right:4px">JUMP:</span>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'story-matrix\')" onclick="jumpToSection(\'story-matrix\')">Story Matrix</div>';
-  html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'interviewers\')" onclick="jumpToSection(\'interviewers\')">Interviewers</div>';
+  // Interviewers dropdown — hover shows list of 6 interviewers, each expands to their likely questions
+  html += '<div class="loop-nav-btn loop-nav-dropdown" onmouseenter="expandSection(\'interviewers\')" onclick="jumpToSection(\'interviewers\')">Interviewers &#9662;';
+  html += '<div class="loop-nav-menu" onclick="event.stopPropagation()">';
+  if (loop.interviewers) {
+    loop.interviewers.forEach(function(iv) {
+      var headName = iv.names[0].split(' ')[0] + (iv.names.length > 1 ? ' + ' + iv.names[1].split(' ')[0] : '');
+      html += '<div class="loop-nav-submenu">' + iv.order + '. ' + headName + ' <span>&#9654;</span>';
+      html += '<div class="loop-nav-submenu-content">';
+      html += '<div class="loop-nav-group">' + iv.names.join(' + ') + ' &middot; ' + iv.time + '</div>';
+      html += '<div style="padding:6px 10px;font-size:0.7rem;color:var(--color-text-muted);font-style:italic;line-height:1.5">' + iv.titles.join(' / ') + '</div>';
+      if (iv.theyMightAsk && iv.theyMightAsk.length) {
+        html += '<div class="loop-nav-group">Likely questions &middot; click to jump to story</div>';
+        iv.theyMightAsk.forEach(function(q) {
+          if (q.storyLink) {
+            html += '<div class="loop-nav-qitem" onclick="jumpToQuestion(\'' + q.storyLink + '\')"><div>&ldquo;' + q.q + '&rdquo;</div><div style="font-size:0.68rem;color:var(--color-success);margin-top:2px">&rarr; ' + q.storyName + '</div></div>';
+          } else {
+            html += '<div class="loop-nav-qitem" style="cursor:default">&ldquo;' + q.q + '&rdquo;<div style="font-size:0.68rem;color:var(--color-text-muted);margin-top:2px;font-style:italic">' + (q.storyName || '') + '</div></div>';
+          }
+        });
+      }
+      html += '</div></div>';
+    });
+  }
+  html += '</div></div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'day-schedule\')" onclick="jumpToSection(\'day-schedule\')">Schedule</div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'lps-section\')" onclick="jumpToSection(\'lps-section\')">LPs</div>';
   html += '<div class="loop-nav-btn" onmouseenter="expandSection(\'fcs-section\')" onclick="jumpToSection(\'fcs-section\')">FCs</div>';
