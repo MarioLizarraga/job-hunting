@@ -929,6 +929,32 @@ function renderSafetyEngineerTab(el, co) {
       }
       html += '</div></details>';
     });
+    // Probable questions for this LP (5 most likely interviewer questions with STAR answers)
+    if (lp.probableQuestions && lp.probableQuestions.length) {
+      html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:14px 0 8px">5 Most Probable Questions for ' + lp.lp + ':</h4>';
+      lp.probableQuestions.forEach(function(pq, qIdx) {
+        html += '<details style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid ' + orange + '">';
+        html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-heading)">Q' + (qIdx + 1) + '. &ldquo;' + pq.q + '&rdquo;</summary>';
+        // Render the STAR answer with colored pills inline
+        html += '<div style="margin-top:10px;font-size:0.82rem;color:var(--color-text);line-height:1.7;background:var(--color-bg);padding:12px;border-radius:var(--radius-sm)">';
+        // Split answer on STAR labels and render with pills
+        var segs = pq.answer.split(/(?=\b[STAR]:\s)/);
+        segs.forEach(function(seg) {
+          var trimmed = seg.replace(/^\n+/, '').trim();
+          if (!trimmed) return;
+          var m = trimmed.match(/^([STAR]):\s*(.+)/s);
+          if (m) {
+            var label = m[1];
+            var rest = m[2];
+            var bg = label === 'A' ? 'var(--color-success)' : orange;
+            html += '<div style="margin-bottom:8px"><span style="display:inline-block;background:' + bg + ';color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin-right:6px;vertical-align:middle">' + label + '</span>' + rest + '</div>';
+          } else {
+            html += '<div style="margin-bottom:8px">' + trimmed + '</div>';
+          }
+        });
+        html += '</div></details>';
+      });
+    }
     html += '</div>';
   });
 
