@@ -54,6 +54,7 @@ function openCompany(key) {
     <div class="interview__tabs">
       ${co.loopInterview ? `<button class="interview__tab active" onclick="showTab('${key}','loop',this)" style="color:var(--color-error);font-weight:700">Loop Interview Prep</button>` : ''}
       ${co.loopInterview?.bluescape ? `<button class="interview__tab" onclick="showTab('${key}','bluescape',this)" style="color:#0078D4;${co.loopInterview.bluescape.optional ? 'opacity:0.5' : ''}">Bluescape${co.loopInterview.bluescape.optional ? ' (Not Required)' : ''}</button>` : ''}
+      ${co.safetyEngineer ? `<button class="interview__tab" onclick="showTab('${key}','safety',this)" style="color:#FF6B35;font-weight:700">Safety Engineer Prep</button>` : ''}
       ${co.phoneScreen ? `<button class="interview__tab ${co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','phonescreen',this)" style="color:var(--color-success)">Phone Screen Prep</button>` : ''}
       ${key === 'amazon' ? `<button class="interview__tab" onclick="showTab('${key}','lps',this)" style="color:#FF9900">Leadership Principles</button>` : ''}
       <button class="interview__tab ${co.phoneScreen || co.loopInterview ? '' : 'active'}" onclick="showTab('${key}','process',this)">Process & Timeline</button>
@@ -78,6 +79,7 @@ function showTab(companyKey, tab, btn) {
   switch (tab) {
     case 'loop': renderLoopInterviewTab(content, co); break;
     case 'bluescape': renderBluescapeTab(content, co); break;
+    case 'safety': renderSafetyEngineerTab(content, co); break;
     case 'phonescreen': renderPhoneScreenTab(content, co); break;
     case 'lps': renderLPsTab(content, co); break;
     case 'process': renderProcessTab(content, co); break;
@@ -848,6 +850,184 @@ function renderBluescapeTab(el, co) {
 
   el.innerHTML = html;
 }
+
+function renderSafetyEngineerTab(el, co) {
+  var se = co.safetyEngineer;
+  if (!se) { el.innerHTML = '<p>No Safety Engineer prep loaded.</p>'; return; }
+  var orange = '#FF6B35';
+  var html = '';
+
+  // Header banner
+  html += '<div style="background:linear-gradient(135deg,' + orange + '22,' + orange + '11);border:2px solid ' + orange + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<div style="font-size:1.4rem;font-weight:900;color:' + orange + '">' + se.role + '</div>';
+  html += '<div style="font-size:0.85rem;color:var(--color-heading);margin-top:4px">Job ID ' + se.jobId + ' &middot; ' + se.location + ' &middot; ' + se.level + ' &middot; ' + se.process + '</div>';
+  html += '<div style="font-size:0.78rem;color:var(--color-text-muted);margin-top:4px">Salary: ' + se.salaryRange + ' &middot; Travel: ' + se.travel + '</div>';
+  html += '<div style="margin-top:12px"><a href="' + se.jobUrl + '" target="_blank" style="font-size:0.78rem;color:' + orange + ';text-decoration:underline">Open job description &rarr;</a></div>';
+  html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text-muted)">Recruiter: <strong style="color:var(--color-text)">' + se.recruiter.name + '</strong> (' + se.recruiter.email + ')</div>';
+  html += '</div>';
+
+  // Role context
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">Role Context</h3>';
+  html += '<p style="font-size:0.85rem;color:var(--color-text);line-height:1.6;margin-bottom:14px">' + se.roleContext + '</p>';
+  html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin-bottom:6px">What the team does day-to-day:</h4>';
+  html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin-bottom:14px">';
+  se.whatTheyDo.forEach(function(w) { html += '<li>' + w + '</li>'; });
+  html += '</ul>';
+  html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin-bottom:6px">Key knowledge they expect:</h4>';
+  html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px">';
+  se.keyKnowledge.forEach(function(k) { html += '<li>' + k + '</li>'; });
+  html += '</ul></div>';
+
+  // Interviewers
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:12px">Interviewers</h3>';
+  se.interviewers.forEach(function(iv) {
+    html += '<div style="background:var(--color-bg);border-left:4px solid ' + orange + ';border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px">';
+    html += '<div style="font-weight:700;color:var(--color-heading);font-size:0.95rem">' + iv.name + '</div>';
+    html += '<div style="font-size:0.8rem;color:' + orange + ';margin-top:2px">' + iv.role + '</div>';
+    html += '<div style="font-size:0.78rem;color:var(--color-text);margin-top:6px;line-height:1.5">' + iv.notes + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Tell Me About Yourself + Why This Role
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Tell Me About Yourself" — Safety Angle</h3>';
+  html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ' + orange + '">' + se.tellMeAboutYourself + '</div>';
+  html += '</div>';
+
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:8px">"Why This Role?"</h3>';
+  html += '<div style="font-size:0.85rem;color:var(--color-text);line-height:1.7;background:var(--color-bg);padding:14px;border-radius:var(--radius-sm);border-left:3px solid ' + orange + '">' + se.whyThisRole + '</div>';
+  html += '</div>';
+
+  // LP Focus Areas (4)
+  html += '<h3 style="color:var(--color-heading);margin-bottom:14px">4 LP Focus Areas (from Priya prep call)</h3>';
+  se.lpFocusAreas.forEach(function(lp, idx) {
+    html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+    html += '<div style="background:' + orange + ';color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.85rem">' + (idx + 1) + '</div>';
+    html += '<div style="font-weight:700;color:var(--color-heading);font-size:1rem">' + lp.lp + '</div>';
+    html += '</div>';
+    html += '<div style="font-size:0.8rem;color:var(--color-text);line-height:1.6;background:' + orange + '11;padding:10px 12px;border-radius:var(--radius-sm);border-left:3px solid ' + orange + ';margin-bottom:12px"><strong style="color:' + orange + '">From Priya:</strong> ' + lp.priyaNotes + '</div>';
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">What they evaluate:</h4>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin-bottom:12px">';
+    lp.whatTheyEvaluate.forEach(function(w) { html += '<li>' + w + '</li>'; });
+    html += '</ul>';
+    // Stories
+    lp.stories.forEach(function(story) {
+      html += '<details style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid var(--color-success)">';
+      html += '<summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--color-heading)">' + story.title + '</summary>';
+      html += '<div style="margin-top:10px;font-size:0.82rem;color:var(--color-text);line-height:1.7">';
+      html += '<div style="margin-bottom:8px"><span style="display:inline-block;background:' + orange + ';color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin-right:6px">S</span>' + story.s + '</div>';
+      html += '<div style="margin-bottom:8px"><span style="display:inline-block;background:' + orange + ';color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin-right:6px">T</span>' + story.t + '</div>';
+      html += '<div style="margin-bottom:8px"><span style="display:inline-block;background:var(--color-success);color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin-right:6px">A</span>' + story.a + '</div>';
+      html += '<div style="margin-bottom:10px"><span style="display:inline-block;background:' + orange + ';color:#fff;padding:0 6px;border-radius:3px;font-size:0.65rem;font-weight:900;margin-right:6px">R</span>' + story.r + '</div>';
+      if (story.safetyAngle) {
+        html += '<div style="background:var(--color-bg);padding:8px 12px;border-radius:var(--radius-sm);border-left:3px solid var(--color-success);font-size:0.78rem;color:var(--color-text);font-style:italic"><strong style="color:var(--color-success)">Safety angle:</strong> ' + story.safetyAngle + '</div>';
+      }
+      html += '</div></details>';
+    });
+    html += '</div>';
+  });
+
+  // FC Focus Areas
+  html += '<h3 style="color:var(--color-heading);margin-bottom:14px">Functional Competency Focus</h3>';
+  se.fcFocusAreas.forEach(function(fc) {
+    html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:16px">';
+    html += '<div style="font-weight:700;color:var(--color-heading);font-size:1rem;margin-bottom:4px">' + fc.name + '</div>';
+    html += '<div style="font-size:0.8rem;color:var(--color-text-muted);font-style:italic;margin-bottom:12px">' + fc.description + '</div>';
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">What they evaluate:</h4>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin-bottom:14px">';
+    fc.whatTheyEvaluate.forEach(function(w) { html += '<li>' + w + '</li>'; });
+    html += '</ul>';
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:6px">Your key talking points:</h4>';
+    html += '<ul style="font-size:0.82rem;color:var(--color-text);line-height:1.7;padding-left:16px;margin-bottom:14px;border-left:3px solid var(--color-success)">';
+    fc.keyTalkingPoints.forEach(function(tp) { html += '<li style="margin-bottom:4px">' + tp + '</li>'; });
+    html += '</ul>';
+    html += '<h4 style="color:var(--color-heading);font-size:0.82rem;margin-bottom:8px">Likely questions + how to answer:</h4>';
+    fc.questions.forEach(function(q) {
+      html += '<details style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;border-left:3px solid ' + orange + '">';
+      html += '<summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-heading)">"' + q.q + '"</summary>';
+      html += '<div style="margin-top:8px;font-size:0.78rem;color:var(--color-text);line-height:1.6;background:var(--color-bg);padding:10px 12px;border-radius:var(--radius-sm)"><strong style="color:var(--color-success)">How to answer:</strong> ' + q.tip + '</div>';
+      html += '</details>';
+    });
+    html += '</div>';
+  });
+
+  // Safety Stories Reference
+  html += '<div style="background:var(--color-bg-card);border:2px solid var(--color-success);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Your Safety Stories &mdash; Reference</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Detailed safety facts from your real projects. Pull specific bullets when answering.</p>';
+  se.safetyStories.forEach(function(s) {
+    html += '<details style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;border-left:3px solid var(--color-success)">';
+    html += '<summary style="cursor:pointer;font-size:0.88rem;font-weight:700;color:var(--color-heading)">' + s.name + '</summary>';
+    html += '<div style="margin-top:10px;font-size:0.8rem;color:var(--color-text);line-height:1.7">';
+    html += '<div style="margin-bottom:10px;font-style:italic;color:var(--color-text-muted)">' + s.summary + '</div>';
+    html += '<ul style="padding-left:20px;margin-bottom:10px">';
+    s.safetyDetails.forEach(function(d) { html += '<li style="margin-bottom:4px">' + d + '</li>'; });
+    html += '</ul>';
+    html += '<div style="font-size:0.72rem;color:var(--color-success);font-weight:600">Relevant to: ' + s.relevantTo + '</div>';
+    html += '</div></details>';
+  });
+  html += '</div>';
+
+  // Questions to Ask
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:12px">Questions to Ask (pick 2-3 per session)</h3>';
+  se.questionsToAsk.forEach(function(group) {
+    html += '<h4 style="color:' + orange + ';font-size:0.85rem;margin:14px 0 8px">' + group.audience + '</h4>';
+    group.items.forEach(function(q) {
+      html += '<div style="font-size:0.82rem;color:var(--color-text);margin-bottom:6px;padding-left:12px;border-left:2px solid ' + orange + '88;line-height:1.5">"' + q + '"</div>';
+    });
+  });
+  html += '</div>';
+
+  // Key Numbers Cheat Sheet
+  html += '<div style="background:var(--color-bg-card);border:2px solid ' + orange + ';border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Key Numbers Cheat Sheet</h3>';
+  html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Quick reference during the interview.</p>';
+  se.keyNumbers.forEach(function(cat) {
+    html += '<h4 style="color:' + orange + ';font-size:0.85rem;margin:14px 0 8px">' + cat.category + '</h4>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">';
+    cat.items.forEach(function(n) {
+      html += '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--color-bg);border-radius:var(--radius-sm);font-size:0.8rem">';
+      html += '<span style="color:var(--color-text)">' + n.label + '</span>';
+      html += '<span style="font-weight:700;color:' + orange + '">' + n.value + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Checklist
+  html += '<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+  html += '<h3 style="color:var(--color-heading);margin-bottom:12px">Preparation Checklist</h3>';
+  html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:6px 0 8px">Before the next interview:</h4>';
+  se.checklist.beforeNextInterview.forEach(function(item) {
+    html += '<label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:0.82rem;color:var(--color-text);cursor:pointer;line-height:1.5">';
+    html += '<input type="checkbox" style="accent-color:' + orange + ';margin-top:3px"> ' + item;
+    html += '</label>';
+  });
+  html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:16px 0 8px">During the interview:</h4>';
+  se.checklist.duringInterview.forEach(function(item) {
+    html += '<label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:0.82rem;color:var(--color-text);cursor:pointer;line-height:1.5">';
+    html += '<input type="checkbox" style="accent-color:' + orange + ';margin-top:3px"> ' + item;
+    html += '</label>';
+  });
+  html += '</div>';
+
+  // Critical Reminders
+  html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
+  html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
+  html += '<ul style="font-size:0.85rem;color:var(--color-text);line-height:1.8;padding-left:20px">';
+  se.criticalReminders.forEach(function(r) { html += '<li>' + r + '</li>'; });
+  html += '</ul></div>';
+
+  el.innerHTML = html;
+}
+
 function renderPhoneScreenTab(el, co) {
   const ps = co.phoneScreen;
   if (!ps) { el.innerHTML = '<p>No phone screen scheduled.</p>'; return; }
