@@ -1018,6 +1018,30 @@ function renderSafetyEngineerTab(el, co) {
   });
   html += '</div>';
 
+  // Fundamentals (ISO 12100, ANSI B11) — study sheet at the bottom
+  if (se.fundamentals && se.fundamentals.length) {
+    html += '<div style="background:var(--color-bg-card);border:2px solid #2196F3;border-radius:var(--radius-md);padding:20px;margin-bottom:20px">';
+    html += '<h3 style="color:var(--color-heading);margin-bottom:4px">Safety Fundamentals — Study Sheet</h3>';
+    html += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-bottom:14px">Critical bullet points on the standards every Safety Engineer is expected to know. Each fundamental is collapsible.</p>';
+    se.fundamentals.forEach(function(f) {
+      html += '<details style="margin-bottom:12px;border:1px solid #2196F344;border-radius:var(--radius-sm);padding:14px;background:#2196F308" open>';
+      html += '<summary style="cursor:pointer;font-size:0.95rem;font-weight:700;color:#2196F3">' + f.name + '</summary>';
+      if (f.tagline) {
+        html += '<div style="margin-top:8px;font-size:0.82rem;color:var(--color-text);font-style:italic;padding:8px 12px;background:var(--color-bg);border-left:3px solid #2196F3;border-radius:var(--radius-sm);line-height:1.6">' + f.tagline + '</div>';
+      }
+      f.sections.forEach(function(sec) {
+        html += '<h4 style="color:var(--color-heading);font-size:0.85rem;margin:14px 0 6px">' + sec.heading + '</h4>';
+        html += '<ul style="font-size:0.8rem;color:var(--color-text);line-height:1.7;padding-left:20px;margin:0">';
+        sec.points.forEach(function(p) {
+          html += '<li style="margin-bottom:4px">' + p + '</li>';
+        });
+        html += '</ul>';
+      });
+      html += '</details>';
+    });
+    html += '</div>';
+  }
+
   // Critical Reminders
   html += '<div style="background:var(--color-error)11;border:2px solid var(--color-error);border-radius:var(--radius-md);padding:20px">';
   html += '<h3 style="color:var(--color-error);margin-bottom:12px">Critical Reminders</h3>';
